@@ -48,6 +48,8 @@ fn main() {
             println!("chars    : {}", captured.text.chars().count());
             println!("text     :");
             println!("{}", captured.text);
+            // Invisible format characters (ZWNJ, bidi marks) show as \u{..}.
+            println!("escaped  : {:?}", captured.text);
         }
         Err(error) => println!("error    : {error}"),
     }
