@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RightPeek Settings</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./settings.ts"></script>
+  </head>
+  <body>
+    <main class="settings">
+      <h1>RightPeek Settings</h1>
+      <div class="field">
+        <label for="hotkey">Shortcut</label>
+        <div class="row">
+          <input id="hotkey" type="text" readonly placeholder="Press a key combination" />
+          <button id="save-hotkey" type="button">Save</button>
+        </div>
+        <span class="hint">Click the box and press the new combination, e.g. Ctrl+Shift+Space.</span>
+        <span id="hotkey-message" class="message" role="status"></span>
+      </div>
+      <div class="field">
+        <label><input id="autostart" type="checkbox" /> Start RightPeek when Windows starts</label>
+        <span id="autostart-message" class="message" role="status"></span>
+      </div>
+    </main>
+  </body>
+</html>
