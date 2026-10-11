@@ -22,14 +22,23 @@ pub fn run() {
                 .with_handler(app::hotkey::handle)
                 .build(),
         )
+        .plugin(
+            // The settings window is small and fixed; only the viewer is remembered.
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(app::viewer::WINDOW_STATE)
+                .with_denylist(&[app::settings::LABEL])
+                .build(),
+        )
         .manage(app::AppState::default())
         .invoke_handler(tauri::generate_handler![
             app::viewer::take_pending_text,
             app::viewer::viewer_ready,
             app::viewer::set_font_size,
+            app::viewer::set_prewarm,
             app::settings::get_settings,
             app::settings::set_hotkey,
             app::settings::set_autostart,
+            app::settings::set_logging,
         ])
         .setup(|app| app::setup(app.handle()))
         .build(tauri::generate_context!())

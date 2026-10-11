@@ -9,6 +9,7 @@ use super::{AppState, lock, settings, viewer};
 const SHOW_LAST: &str = "show_last";
 const SETTINGS: &str = "settings";
 const QUIT: &str = "quit";
+const TRAY_ID: &str = "main";
 
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let menu = Menu::with_items(
@@ -20,9 +21,8 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
             &MenuItem::with_id(app, QUIT, "Quit", true, None::<&str>)?,
         ],
     )?;
-    let hotkey = lock(&app.state::<AppState>().settings).hotkey.clone();
-    let mut builder = TrayIconBuilder::with_id("main")
-        .tooltip(format!("RightPeek ({hotkey})"))
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
+        .tooltip(tooltip(app))
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -46,4 +46,21 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     }
     builder.build(app)?;
     Ok(())
+}
+
+/// Updates the tooltip after the hotkey changes or fails to register.
+pub fn refresh_tooltip(app: &AppHandle) {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        let _ = tray.set_tooltip(Some(tooltip(app)));
+    }
+}
+
+fn tooltip(app: &AppHandle) -> String {
+    let state = app.state::<AppState>();
+    let hotkey = lock(&state.settings).hotkey.clone();
+    if lock(&state.hotkey_error).is_some() {
+        format!("RightPeek: {hotkey} is unavailable. Open Settings to pick another shortcut.")
+    } else {
+        format!("RightPeek ({hotkey})")
+    }
 }
