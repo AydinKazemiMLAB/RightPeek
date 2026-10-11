@@ -1,5 +1,5 @@
 //! Windows capture backend: UI Automation first, clipboard fallback second.
-//! Implemented in Phase 1 per PLAN.md §4 and the `windows-text-capture` skill.
+//! Implemented in Phase 1 per docs/PLAN.md §4 and the `windows-text-capture` skill.
 
 use std::time::Duration;
 
