@@ -49,6 +49,35 @@ impl std::fmt::Display for CaptureError {
 
 impl std::error::Error for CaptureError {}
 
+impl CaptureError {
+    /// Short heading for the viewer notice.
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::NothingSelected => "No text selected",
+            Self::Timeout => "The app did not respond",
+            Self::AccessDenied => "Administrator window",
+            Self::Unsupported => "Not supported",
+            Self::Platform(_) => "Capture failed",
+        }
+    }
+
+    /// What the user can do next; shown under the title.
+    pub fn hint(&self) -> String {
+        match self {
+            Self::NothingSelected => {
+                "Select some text in any app, then press the shortcut again.".into()
+            }
+            Self::Timeout => "It may be busy. Wait a moment and try again.".into(),
+            Self::AccessDenied => "Windows does not let RightPeek read apps running as \
+                administrator. Copy the text into a normal app such as Notepad and \
+                capture it there."
+                .into(),
+            Self::Unsupported => "Text capture is not available on this platform yet.".into(),
+            Self::Platform(detail) => format!("Try again. Details: {detail}"),
+        }
+    }
+}
+
 /// Joins the text of each selected range with `\n`, skipping empty ranges.
 /// Returns `None` when nothing visible is left (whitespace and zero-width
 /// characters only), so callers can report [`CaptureError::NothingSelected`].
@@ -114,6 +143,42 @@ mod tests {
             CaptureError::Platform("COM init failed".into()).to_string(),
             "Text capture failed: COM init failed"
         );
+    }
+
+    #[test]
+    fn every_error_has_a_short_title_and_a_next_step() {
+        let cases = [
+            (CaptureError::NothingSelected, "No text selected"),
+            (CaptureError::Timeout, "The app did not respond"),
+            (CaptureError::AccessDenied, "Administrator window"),
+            (CaptureError::Unsupported, "Not supported"),
+            (CaptureError::Platform("x".into()), "Capture failed"),
+        ];
+        for (error, title) in cases {
+            assert_eq!(error.title(), title);
+            assert!(!error.hint().is_empty(), "{error:?} has no hint");
+        }
+    }
+
+    #[test]
+    fn nothing_selected_hint_says_how_to_retry() {
+        assert_eq!(
+            CaptureError::NothingSelected.hint(),
+            "Select some text in any app, then press the shortcut again."
+        );
+    }
+
+    #[test]
+    fn access_denied_hint_explains_the_windows_limit() {
+        let hint = CaptureError::AccessDenied.hint();
+        assert!(hint.contains("administrator"), "{hint}");
+        assert!(hint.contains("Notepad"), "{hint}");
+    }
+
+    #[test]
+    fn platform_hint_keeps_the_os_detail() {
+        let hint = CaptureError::Platform("COM init failed".into()).hint();
+        assert!(hint.contains("COM init failed"), "{hint}");
     }
 
     #[test]

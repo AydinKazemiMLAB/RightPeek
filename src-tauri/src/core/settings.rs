@@ -13,6 +13,10 @@ pub struct Settings {
     pub hotkey: String,
     pub autostart: bool,
     pub font_size: u8,
+    /// Keep a hidden viewer alive for a faster first open (costs RAM).
+    pub prewarm: bool,
+    /// Write a rotating log file (diagnostics; never the captured text).
+    pub logging: bool,
 }
 
 impl Default for Settings {
@@ -21,6 +25,8 @@ impl Default for Settings {
             hotkey: DEFAULT_HOTKEY.to_owned(),
             autostart: false,
             font_size: DEFAULT_FONT_SIZE,
+            prewarm: false,
+            logging: cfg!(debug_assertions),
         }
     }
 }
@@ -171,6 +177,12 @@ mod tests {
         assert_eq!(settings.hotkey, "Ctrl+Shift+Space");
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
+        assert!(!settings.prewarm, "pre-warm costs RAM, so it is opt-in");
+    }
+
+    #[test]
+    fn logging_is_on_in_debug_builds_only() {
+        assert_eq!(Settings::default().logging, cfg!(debug_assertions));
     }
 
     #[test]
@@ -187,6 +199,8 @@ mod tests {
             hotkey: "Ctrl+Shift+R".into(),
             autostart: true,
             font_size: 22,
+            prewarm: true,
+            logging: true,
         };
         let json = serde_json::to_value(&settings).unwrap();
         assert_eq!(json["fontSize"], 22);
