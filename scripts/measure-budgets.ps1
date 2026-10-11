@@ -14,6 +14,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# `-File` passes "Ctrl,Alt" as one string; split it into modifier names.
+$Modifiers = @($Modifiers -split ',' | ForEach-Object Trim)
 $timingLog = Join-Path $env:TEMP 'rightpeek-timing.log'
 Remove-Item $timingLog -ErrorAction SilentlyContinue
 
