@@ -1,6 +1,6 @@
 # RightPeek — agent conventions
 
-`PLAN.md` is the source of truth (goals, budgets, architecture, phases). Read the
+`docs/PLAN.md` is the source of truth (goals, budgets, architecture, phases). Read the
 relevant section before working; do not re-plan what it already decides.
 
 ## Language
@@ -8,6 +8,7 @@ relevant section before working; do not re-plan what it already decides.
 - Everything in the repo (code, identifiers, comments, commits, docs, skills): **English**.
 
 ## Layout
+- `docs/` — project docs (`PLAN.md`, `capture-matrix.md`, ...). New docs go here.
 - `src/` — viewer frontend: vanilla TS + Vite, no framework.
 - `src-tauri/src/core/` — pure logic, no OS calls, unit-tested (TDD).
 - `src-tauri/src/platform/` — OS backends implementing `core::capture::SelectionProvider`.
