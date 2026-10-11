@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const DEFAULT_HOTKEY: &str = "Ctrl+Alt+Space";
+pub const DEFAULT_HOTKEY: &str = "Ctrl+Shift+Space";
 pub const DEFAULT_FONT_SIZE: u8 = 18;
 pub const MIN_FONT_SIZE: u8 = 12;
 pub const MAX_FONT_SIZE: u8 = 40;
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn defaults_match_plan() {
         let settings = Settings::default();
-        assert_eq!(settings.hotkey, "Ctrl+Alt+Space");
+        assert_eq!(settings.hotkey, "Ctrl+Shift+Space");
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
     }

@@ -190,7 +190,7 @@ Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets mea
 - **Done when:** ≥ 9/11 apps return correct text; clipboard verifiably restored; nothing appears in Win+V history.
 
 ### Phase 2 — MVP
-- Tray icon + menu (Show last, Settings, Quit). Global hotkey (default `Ctrl+Alt+Space`, configurable).
+- Tray icon + menu (Show last, Settings, Quit). Global hotkey (default `Ctrl+Shift+Space`, configurable; changed from `Ctrl+Alt+Space`, which another app held on the test machine).
 - Single instance; autostart toggle; settings via store plugin.
 - Viewer window created on demand, destroyed on close; RTL rendering per §5; bundled font.
 - Least-privilege capabilities in `src-tauri/capabilities/`.
