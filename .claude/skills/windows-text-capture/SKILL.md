@@ -76,7 +76,13 @@ could not be snapshotted are simply lost (document in the matrix).
   clipboard fallback there.
 - Delay-rendered formats may not restore exactly; document, don't fight.
 
+- Win32 EDIT controls (WinForms `TextBox`) expose no TextPattern -> clipboard path.
+  WPF `TextBox` does expose it.
+- With a null owner `EmptyClipboard` makes `SetClipboardData` fail: open the
+  clipboard with a message-only window as owner (`MessageWindow` in windows.rs).
+
 ## Validation
-`cargo run --manifest-path src-tauri/Cargo.toml --bin capture-probe` (waits 3 s,
-prints method + text). Record each app in `docs/capture-matrix.md`: app, method,
-correct text (y/n), clipboard restored (y/n), Win+V clean (y/n), notes.
+`cargo run --manifest-path src-tauri/Cargo.toml --bin capture-probe -- [--uia | --clipboard] [delay_secs]`
+(default delay 3 s; prints method, text, elapsed, whether the clipboard text
+survived). `--uia` shows why UIA fails; `--clipboard` forces the fallback.
+Record each app in `docs/capture-matrix.md` (how-to steps are in that file).
