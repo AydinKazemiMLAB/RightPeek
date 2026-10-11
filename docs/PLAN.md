@@ -8,7 +8,7 @@
 
 ## 1. How to use this file
 
-1. Put this file at the repo root as `PLAN.md`.
+1. Keep this file at `docs/PLAN.md` (project docs live in `docs/`).
 2. Run the setup commands in §6 and §7 once (skills + graft).
 3. Start a coding-agent session (Claude Code) and paste the **Kickoff Prompt** from §11.
 4. At the end of each phase, review, then send the **Next-Phase Prompt** (§11).
@@ -70,8 +70,8 @@ Key decisions:
 ### Repo layout
 ```
 /
-├─ PLAN.md
-├─ CLAUDE.md                     # short: conventions + pointer to PLAN.md
+├─ CLAUDE.md                     # short: conventions + pointer to docs/PLAN.md
+├─ docs/                         # PLAN.md, capture-matrix.md, other project docs
 ├─ .claude/skills/windows-text-capture/SKILL.md   # custom skill (Phase 0)
 ├─ src/                          # frontend: index.html, main.ts, style.css, fonts/
 ├─ src-tauri/
@@ -246,7 +246,7 @@ Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets mea
 ### Next-Phase Prompt
 
 ```text
-Phase <N> is approved. Re-read only PLAN.md §8 "Phase <N+1>" and anything it
+Phase <N> is approved. Re-read only docs/PLAN.md §8 "Phase <N+1>" and anything it
 references, then start it. Same rules as before: Persian in chat, English in the
 repo, graft-first navigation, stop for approval at the end of the phase.
 ```
