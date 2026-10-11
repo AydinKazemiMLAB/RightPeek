@@ -8,6 +8,8 @@ fn main() {
         "get_settings",
         "set_hotkey",
         "set_autostart",
+        "set_prewarm",
+        "set_logging",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("failed to run tauri-build");
