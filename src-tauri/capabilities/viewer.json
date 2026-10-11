@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "viewer",
+  "description": "Viewer window: pull captured text, report readiness, persist font size, listen for new text, close itself.",
+  "windows": ["viewer"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-close",
+    "allow-take-pending-text",
+    "allow-viewer-ready",
+    "allow-set-font-size"
+  ]
+}
