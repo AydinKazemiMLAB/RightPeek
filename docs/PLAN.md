@@ -56,7 +56,7 @@
                 │ invoke("take_pending_text")  (pull, no race)
 ┌───────────────▼──────────── Viewer (WebView) ──────────────────┐
 │ index.html + main.ts + style.css — no framework                 │
-│ paragraphs rendered with dir="auto" + unicode-bidi: plaintext   │
+│ paragraphs rendered with dir from word majority + bidi isolate  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -107,8 +107,8 @@ Hotkey: use the Tauri global-shortcut plugin (RegisterHotKey-based). **Never** i
 
 ## 5. RTL rendering rules (viewer)
 
-- Split text into paragraphs on blank lines/newlines; each paragraph is a `<p dir="auto">`.
-- CSS: `unicode-bidi: plaintext;` per paragraph; `text-align: start;` page default `dir="rtl"`.
+- Split text into paragraphs on blank lines/newlines; each paragraph is a `<p>` whose `dir` is set by `core` from the majority of its words (tie → RTL), not first-strong: Persian technical text often starts with a Latin term (Phase 2 finding).
+- CSS: `unicode-bidi: isolate;` per paragraph (not `plaintext`, which would ignore `dir` and the RTL/LTR override); `text-align: start;` page default `dir="rtl"`.
 - Bundle **Vazirmatn** (woff2, Latin+Arabic subsets only) locally; no network fonts.
 - Normalize: CRLF→LF, strip zero-width junk except ZWNJ (U+200C, needed in Persian), trim trailing spaces.
 - Normalize Arabic presentation forms (U+FB50–U+FDFF, U+FE70–U+FEFF, common in PDF text layers) to base letters via NFKC applied to those characters only; dependency `unicode-normalization` approved by the user (Phase 1 matrix finding).

@@ -118,7 +118,9 @@ body {
 
 .viewer p {
   margin: 0 0 0.35em;
-  unicode-bidi: plaintext;
+  /* Base direction comes from the dir attribute (core majority detection or
+     the user's override); `plaintext` would force first-strong instead. */
+  unicode-bidi: isolate;
   text-align: start;
   white-space: pre-wrap;
   overflow-wrap: anywhere;

@@ -75,17 +75,40 @@ pub fn paragraphs(text: &str) -> Vec<Paragraph> {
     result
 }
 
-/// Direction of the first strong (letter) character.
+/// Direction of the majority of words; a tie goes to RTL. First-strong
+/// detection fails on Persian text that starts with a Latin term
+/// ("fmt، clippy بدون ..."), which is common in technical writing.
 pub fn detect_direction(text: &str) -> Direction {
-    text.chars()
-        .find(|c| c.is_alphabetic())
-        .map_or(Direction::Auto, |c| {
-            if is_rtl_letter(c) {
-                Direction::Rtl
-            } else {
-                Direction::Ltr
-            }
-        })
+    let (mut rtl, mut ltr) = (0usize, 0usize);
+    for word in text.split_whitespace() {
+        match majority_direction(word.chars()) {
+            Direction::Rtl => rtl += 1,
+            Direction::Ltr => ltr += 1,
+            Direction::Auto => {}
+        }
+    }
+    direction_from_counts(rtl, ltr)
+}
+
+/// Direction of the majority of letters in `chars`; a tie goes to RTL.
+fn majority_direction(chars: impl Iterator<Item = char>) -> Direction {
+    let (mut rtl, mut ltr) = (0usize, 0usize);
+    for c in chars.filter(|c| c.is_alphabetic()) {
+        if is_rtl_letter(c) {
+            rtl += 1;
+        } else {
+            ltr += 1;
+        }
+    }
+    direction_from_counts(rtl, ltr)
+}
+
+fn direction_from_counts(rtl: usize, ltr: usize) -> Direction {
+    match (rtl, ltr) {
+        (0, 0) => Direction::Auto,
+        _ if rtl >= ltr => Direction::Rtl,
+        _ => Direction::Ltr,
+    }
 }
 
 /// Zero-width characters that carry no meaning in captured text. ZWNJ
@@ -230,9 +253,27 @@ mod tests {
     }
 
     #[test]
-    fn direction_uses_first_strong_character() {
+    fn direction_follows_the_majority_of_words_not_the_first_letter() {
+        let persian_with_leading_terms =
+            "fmt، clippy بدون هیچ هشدار، ۵۲ تست از ۵۲، build و graft همه بدون مشکل بودن.";
+        assert_eq!(detect_direction(persian_with_leading_terms), Direction::Rtl);
         assert_eq!(detect_direction("2. قیدهای یکتا (Unique)"), Direction::Rtl);
-        assert_eq!(detect_direction("Unique قیدهای"), Direction::Ltr);
+        assert_eq!(
+            detect_direction("The word سلام means hello in Persian"),
+            Direction::Ltr
+        );
+    }
+
+    #[test]
+    fn direction_counts_a_url_as_one_word() {
+        let text = "برای دانلود به https://github.com/tauri-apps/tauri برو";
+        assert_eq!(detect_direction(text), Direction::Rtl);
+    }
+
+    #[test]
+    fn direction_tie_prefers_rtl() {
+        assert_eq!(detect_direction("Unique قیدهای"), Direction::Rtl);
+        assert_eq!(detect_direction("قیدهای Unique"), Direction::Rtl);
     }
 
     #[test]
