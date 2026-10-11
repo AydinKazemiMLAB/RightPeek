@@ -13,7 +13,7 @@ interface Paragraph {
 
 type ViewerContent =
   | { kind: "text"; paragraphs: Paragraph[]; plain: string }
-  | { kind: "notice"; message: string };
+  | { kind: "notice"; title: string; hint: string };
 
 interface ViewerPayload {
   content: ViewerContent;
@@ -42,10 +42,17 @@ function render(content: ViewerContent): void {
   viewer.replaceChildren();
   if (content.kind === "notice") {
     plainText = "";
-    const notice = document.createElement("p");
+    const notice = document.createElement("section");
     notice.className = "notice";
-    notice.dir = "auto";
-    notice.textContent = content.message;
+    notice.dir = "ltr";
+    const title = document.createElement("h2");
+    title.textContent = content.title;
+    notice.append(title);
+    if (content.hint) {
+      const hint = document.createElement("p");
+      hint.textContent = content.hint;
+      notice.append(hint);
+    }
     viewer.append(notice);
     return;
   }

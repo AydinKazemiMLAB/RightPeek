@@ -28,6 +28,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Arabic presentation forms -> base letters (PLAN.md §5, approved by the user).
 unicode-normalization = "0.1"
+tauri-plugin-window-state = "2"
 
 # Selection capture: UI Automation, clipboard, SendInput (PLAN.md §4).
 [target.'cfg(windows)'.dependencies]

@@ -5,7 +5,7 @@ use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_store::StoreExt as _;
 
-use super::{AppState, hotkey, lock};
+use super::{AppState, hotkey, lock, logging, tray};
 use crate::core::settings::{Settings, normalize_hotkey};
 
 pub const LABEL: &str = "settings";
@@ -41,7 +41,7 @@ pub fn save(app: &AppHandle) {
             store.save().map_err(|e| e.to_string())
         });
     if let Err(error) = saved {
-        eprintln!("RightPeek: cannot save settings: {error}");
+        logging::error(&format!("cannot save settings: {error}"));
     }
 }
 
@@ -54,13 +54,13 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(440.0, 300.0)
+        .inner_size(460.0, 420.0)
         .resizable(false)
         .center()
         .focused(true)
         .build();
     if let Err(error) = built {
-        eprintln!("RightPeek: cannot open settings: {error}");
+        logging::error(&format!("cannot open settings: {error}"));
     }
 }
 
@@ -69,6 +69,7 @@ pub fn open_window(app: &AppHandle) {
 pub struct SettingsView {
     settings: Settings,
     hotkey_error: Option<String>,
+    log_dir: Option<String>,
 }
 
 #[tauri::command]
@@ -76,6 +77,7 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
     SettingsView {
         settings: lock(&state.settings).clone(),
         hotkey_error: lock(&state.hotkey_error).clone(),
+        log_dir: logging::dir().map(|dir| dir.display().to_string()),
     }
 }
 
@@ -83,9 +85,13 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
 #[tauri::command]
 pub fn set_hotkey(app: AppHandle, hotkey: String) -> Result<String, String> {
     let hotkey = normalize_hotkey(&hotkey).map_err(|e| e.to_string())?;
-    hotkey::replace(&app, &hotkey)?;
-    lock(&app.state::<AppState>().settings).hotkey = hotkey.clone();
-    save(&app);
+    let replaced = hotkey::replace(&app, &hotkey);
+    if replaced.is_ok() {
+        lock(&app.state::<AppState>().settings).hotkey = hotkey.clone();
+        save(&app);
+    }
+    tray::refresh_tooltip(&app);
+    replaced?;
     Ok(hotkey)
 }
 
@@ -101,4 +107,18 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
+}
+
+#[tauri::command]
+pub fn set_logging(app: AppHandle, enabled: bool) -> bool {
+    if !enabled {
+        logging::info("logging off");
+    }
+    logging::set_enabled(enabled);
+    if enabled {
+        logging::info("logging on");
+    }
+    lock(&app.state::<AppState>().settings).logging = enabled;
+    save(&app);
+    enabled
 }
