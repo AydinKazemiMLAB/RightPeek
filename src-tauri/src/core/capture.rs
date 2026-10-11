@@ -49,6 +49,31 @@ impl std::fmt::Display for CaptureError {
 
 impl std::error::Error for CaptureError {}
 
+/// Joins the text of each selected range with `\n`, skipping empty ranges.
+/// Returns `None` when nothing visible is left (whitespace and zero-width
+/// characters only), so callers can report [`CaptureError::NothingSelected`].
+pub fn selection_text<I>(parts: I) -> Option<String>
+where
+    I: IntoIterator<Item = String>,
+{
+    let joined = parts
+        .into_iter()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n");
+    let visible = joined
+        .chars()
+        .any(|c| !c.is_whitespace() && !is_zero_width(c));
+    visible.then_some(joined)
+}
+
+fn is_zero_width(c: char) -> bool {
+    matches!(
+        c,
+        '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{2060}' | '\u{FEFF}'
+    )
+}
+
 /// A platform backend that reads the current selection of the focused app.
 pub trait SelectionProvider {
     /// Captures the current selection, giving up after `timeout`.
@@ -95,6 +120,38 @@ mod tests {
     fn capture_error_is_a_std_error() {
         fn assert_error<E: std::error::Error>(_: &E) {}
         assert_error(&CaptureError::Unsupported);
+    }
+
+    #[test]
+    fn selection_text_joins_ranges_with_newline() {
+        let parts = ["سلام".to_string(), "دنیا".to_string()];
+        assert_eq!(selection_text(parts).as_deref(), Some("سلام\nدنیا"));
+    }
+
+    #[test]
+    fn selection_text_skips_empty_ranges() {
+        let parts = [String::new(), "متن".to_string(), String::new()];
+        assert_eq!(selection_text(parts).as_deref(), Some("متن"));
+    }
+
+    #[test]
+    fn selection_text_is_none_for_whitespace_only() {
+        let parts = [" \r\n\t".to_string(), "\u{200C}".to_string()];
+        assert_eq!(selection_text(parts), None);
+    }
+
+    #[test]
+    fn selection_text_is_none_without_ranges() {
+        assert_eq!(selection_text(Vec::<String>::new()), None);
+    }
+
+    #[test]
+    fn selection_text_keeps_inner_whitespace_and_zwnj() {
+        let parts = ["  می\u{200C}خواهم  ".to_string()];
+        assert_eq!(
+            selection_text(parts).as_deref(),
+            Some("  می\u{200C}خواهم  ")
+        );
     }
 
     #[test]
