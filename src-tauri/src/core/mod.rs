@@ -2,5 +2,6 @@
 //! so every item is unit-testable on any OS (docs/PLAN.md §3).
 
 pub mod capture;
+pub mod log;
 pub mod settings;
 pub mod text;
