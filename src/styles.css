@@ -1,11 +1,188 @@
+/* Vazirmatn, bundled locally (OFL, see fonts/OFL.txt); Arabic + Latin subsets. */
+@font-face {
+  font-family: "Vazirmatn";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/vazirmatn-arabic-400-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74,
+    U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./fonts/vazirmatn-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("./fonts/vazirmatn-arabic-700-normal.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1,
+    U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74,
+    U+FE76-FEFC;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("./fonts/vazirmatn-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
 :root {
   color-scheme: light dark;
-  font-family: system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
+  --font-size: 18px;
+  --bg: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #6e6e73;
+  --bar-bg: #f5f5f7;
+  --border: #d2d2d7;
+  --button-bg: #ffffff;
+  --button-hover: #e8e8ed;
+  font-family: "Vazirmatn", system-ui, sans-serif;
+  line-height: 1.8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --fg: #f2f2f7;
+    --muted: #a1a1a6;
+    --bar-bg: #2c2c2e;
+    --border: #3a3a3c;
+    --button-bg: #3a3a3c;
+    --button-hover: #48484a;
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  padding: 1rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.toolbar button {
+  font: inherit;
+  color: inherit;
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  background: var(--button-hover);
+}
+
+.toolbar .close {
+  margin-inline-start: auto;
+}
+
+.status {
+  color: var(--muted);
+}
+
+.viewer {
+  padding: 12px 18px 24px;
+  font-size: var(--font-size);
+}
+
+.viewer p {
+  margin: 0 0 0.35em;
+  unicode-bidi: plaintext;
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.viewer p.gap {
+  height: 0.8em;
+  margin: 0;
+}
+
+.viewer p.notice {
+  color: var(--muted);
+}
+
+/* Settings page */
+.settings {
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.settings h1 {
+  font-size: 16px;
+  margin: 0 0 14px;
+}
+
+.settings .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.settings .row {
+  display: flex;
+  gap: 8px;
+}
+
+.settings input[type="text"] {
+  flex: 1;
+  font: inherit;
+  color: inherit;
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.settings button {
+  font: inherit;
+  color: inherit;
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.settings .hint,
+.settings .message {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settings .message.error {
+  color: #d70015;
 }
