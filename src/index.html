@@ -8,6 +8,14 @@
     <script type="module" src="./main.ts"></script>
   </head>
   <body>
-    <main id="viewer"></main>
+    <header class="toolbar" dir="ltr">
+      <button id="copy" type="button" title="Copy all text">Copy</button>
+      <button id="smaller" type="button" title="Smaller text">A−</button>
+      <button id="larger" type="button" title="Larger text">A+</button>
+      <button id="direction" type="button" title="Direction: automatic per paragraph">Auto</button>
+      <span id="status" class="status" role="status"></span>
+      <button id="close" type="button" class="close" title="Close (Esc)">✕</button>
+    </header>
+    <main id="viewer" class="viewer"></main>
   </body>
 </html>
