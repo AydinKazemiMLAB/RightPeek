@@ -19,6 +19,8 @@ $Modifiers = @($Modifiers -split ',' | ForEach-Object Trim)
 
 Add-Type -Namespace RightPeekSoak -Name Keys -MemberDefinition @'
 [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern System.IntPtr FindWindow(string cls, string title);
+[DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h);
 '@
 
 function Send-Keys([byte[]]$Mods, [byte]$Vk) {
@@ -33,6 +35,12 @@ function Send-Keys([byte[]]$Mods, [byte]$Vk) {
 $codes = @{ Ctrl = 0x11; Alt = 0x12; Shift = 0x10; Win = 0x5B }
 $hotkeyMods = [byte[]]@($Modifiers | ForEach-Object { $codes[$_] })
 $hotkeyVk = if ($Key -eq 'Space') { [byte]0x20 } else { [byte][char]$Key.ToUpper() }
+
+# The viewer is the only top-level window titled exactly "RightPeek".
+function Test-ViewerVisible {
+    $h = [RightPeekSoak.Keys]::FindWindow($null, 'RightPeek')
+    $h -ne [IntPtr]::Zero -and [RightPeekSoak.Keys]::IsWindowVisible($h)
+}
 
 function Get-PrivateMB([int]$Id) {
     $perf = Get-CimInstance Win32_PerfFormattedData_PerfProc_Process -Filter "IDProcess=$Id" -ErrorAction SilentlyContinue
@@ -55,7 +63,10 @@ $memStart = Get-PrivateMB $app.Id
 $deadline = (Get-Date).AddMinutes($Minutes)
 $rounds = 0; $failures = 0; $alive = $true
 
+$locked = $false
 while ((Get-Date) -lt $deadline) {
+    # Keys go nowhere on the lock screen; stop instead of counting failures.
+    if (Get-Process LogonUI -ErrorAction SilentlyContinue) { $locked = $true; break }
     $rounds++
     foreach ($empty in $false, $true) {
         if ($empty) { $box = Start-Target ''; Start-Sleep -Seconds 4 }
@@ -63,8 +74,7 @@ while ((Get-Date) -lt $deadline) {
         Start-Sleep -Milliseconds 400
         Send-Keys $hotkeyMods $hotkeyVk
         Start-Sleep -Seconds $PauseSeconds
-        $viewer = Get-Process rightpeek -ErrorAction SilentlyContinue | Where-Object MainWindowHandle -ne 0
-        if (-not $viewer) { $failures++ } else { Send-Keys @() 0x1B }  # Esc closes the viewer
+        if (-not (Test-ViewerVisible)) { $failures++ } else { Send-Keys @() 0x1B }  # Esc closes the viewer
         if ($empty) { Stop-Process -Id $box.Id -ErrorAction SilentlyContinue }
         Start-Sleep -Milliseconds 500
     }
@@ -80,6 +90,7 @@ if ($alive) { Stop-Process -Id $app.Id -ErrorAction SilentlyContinue }
     'Rounds (2 captures each)'      = $rounds
     'Viewer did not appear'         = $failures
     'App still alive'               = $alive
+    'Stopped early: screen locked'  = $locked
     'Idle-ish RAM at start (MB)'    = $memStart
     'RAM at end (MB)'               = $memEnd
 } | Format-List
