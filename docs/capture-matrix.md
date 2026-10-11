@@ -28,29 +28,24 @@ Legend: ✅ yes · ❌ no · — not applicable / not tested.
 ## Target apps
 
 Run 1 on the user's machine (Windows 11). Elapsed = default mode / `--clipboard` mode.
-Win+V results pending.
+Firefox and Outlook are not installed; the user approved PotPlayer and WinRAR as
+substitutes. Edge was tested as the PDF reader.
+
+**Result: 11/11 correct, clipboard restored in all 22 runs, Win+V clean in all runs. Phase 1 criteria met.**
 
 | # | App | Default method | Text correct | Clipboard restored | Win+V clean | Elapsed (ms) | Notes |
 |---|---|---|---|---|---|---|---|
-| 1 | Chrome | Clipboard | ✅ | ✅ | ? | 90 / 17 | ZWNJ preserved |
-| 2 | Edge (web page) | — | — | — | — | — | Not tested yet (same engine as Chrome) |
-| 3 | Firefox | — | — | — | — | — | Not tested yet |
-| 4 | Word | Uia | ✅ | ✅ | ? | 170 / 67 | |
-| 5 | Notepad | Uia | ✅ | ✅ | ? | 31 / 22 | |
-| 6 | VS Code | Clipboard | ✅ | ✅ | ? | 110 / 26 | |
-| 7 | Windows Terminal | Uia | ? | ✅ | ? | 47 / 14 | Captured text is mojibake (UTF-8 read as cp1252) in both modes; to check whether the screen itself showed it |
-| 8 | Telegram Desktop | Clipboard | ✅ | ✅ | ? | 79 / 21 | |
-| 9 | PDF reader (Edge) | Clipboard | ✅ | ✅ | ? | 105 / 39 | Text layer uses Arabic presentation forms (U+FB50–U+FEFF) |
-| 10 | Outlook | — | — | — | — | — | Not tested yet |
-| 11 | File Explorer rename box | Clipboard | ✅ | ✅ | ? | 75 / 18 | |
-
-Extra apps tested (not in the PLAN list):
-
-| App | Default method | Text correct | Clipboard restored | Win+V clean | Elapsed (ms) | Notes |
-|---|---|---|---|---|---|---|
-| Claude desktop (Electron) | Clipboard | ✅ | ✅ | ? | 77 / 26 | |
-| PotPlayer settings | Clipboard | ✅ | ✅ | ? | 37 / 16 | |
-| WinRAR | Clipboard | ✅ | ✅ | ? | 56 / 16 | |
+| 1 | Chrome | Clipboard | ✅ | ✅ | ✅ | 90 / 17 | ZWNJ preserved |
+| 2 | Edge (PDF reader) | Clipboard | ✅ | ✅ | ✅ | 105 / 39 | PDF text layer uses Arabic presentation forms (U+FB50–U+FEFF); normalized in Phase 2 |
+| 3 | PotPlayer settings (substitute for Firefox) | Clipboard | ✅ | ✅ | ✅ | 37 / 16 | |
+| 4 | Word | Uia | ✅ | ✅ | ✅ | 170 / 67 | |
+| 5 | Notepad | Uia | ✅ | ✅ | ✅ | 31 / 22 | |
+| 6 | VS Code | Clipboard | ✅ | ✅ | ✅ | 110 / 26 | |
+| 7 | Windows Terminal | Uia | ✅ | ✅ | ✅ | 47 / 14 | Captured mojibake matches the screen (the shell printed UTF-8 as cp1252) |
+| 8 | Telegram Desktop | Clipboard | ✅ | ✅ | ✅ | 79 / 21 | |
+| 9 | Claude desktop (Electron) | Clipboard | ✅ | ✅ | ✅ | 77 / 26 | |
+| 10 | WinRAR (substitute for Outlook) | Clipboard | ✅ | ✅ | ✅ | 56 / 16 | |
+| 11 | File Explorer rename box | Clipboard | ✅ | ✅ | ✅ | 75 / 18 | |
 
 ## Reference targets (development self-test, not counted)
 
