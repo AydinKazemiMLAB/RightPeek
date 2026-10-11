@@ -1,13 +1,14 @@
 ﻿# Measures the docs/PLAN.md §2 budgets against a release build.
 #
 #   npm run tauri build -- --no-bundle
-#   powershell -ExecutionPolicy Bypass -File scripts/measure-budgets.ps1 -Key Q
+#   powershell -ExecutionPolicy Bypass -File scripts/measure-budgets.ps1 -Modifiers Ctrl,Alt -Key Q
 #
-# -Key is the letter/space of the configured hotkey; modifiers are Ctrl+Alt.
+# -Modifiers and -Key describe the configured hotkey (default Ctrl+Shift+Space).
 # The script starts the app, measures idle RAM and CPU, presses the hotkey on a
 # test window (cold, then warm), measures RAM with the viewer open, and quits.
 param(
     [string]$Exe = "$PSScriptRoot\..\src-tauri\target\release\rightpeek.exe",
+    [string[]]$Modifiers = @('Ctrl', 'Shift'),
     [string]$Key = 'Space',
     [int]$IdleSeconds = 20
 )
@@ -22,14 +23,15 @@ Add-Type -Namespace RightPeekBench -Name Keys -MemberDefinition @'
 
 function Send-Hotkey([string]$KeyName) {
     $vk = if ($KeyName -eq 'Space') { 0x20 } else { [byte][char]$KeyName.ToUpper() }
-    $ctrl = 0x11; $alt = 0x12; $up = 2
-    [RightPeekBench.Keys]::keybd_event($ctrl, 0, 0, [UIntPtr]::Zero)
-    [RightPeekBench.Keys]::keybd_event($alt, 0, 0, [UIntPtr]::Zero)
+    $codes = @{ Ctrl = 0x11; Alt = 0x12; Shift = 0x10; Win = 0x5B }
+    $mods = @($Modifiers | ForEach-Object { [byte]$codes[$_] })
+    $up = 2
+    foreach ($m in $mods) { [RightPeekBench.Keys]::keybd_event($m, 0, 0, [UIntPtr]::Zero) }
     [RightPeekBench.Keys]::keybd_event($vk, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds 30
     [RightPeekBench.Keys]::keybd_event($vk, 0, $up, [UIntPtr]::Zero)
-    [RightPeekBench.Keys]::keybd_event($alt, 0, $up, [UIntPtr]::Zero)
-    [RightPeekBench.Keys]::keybd_event($ctrl, 0, $up, [UIntPtr]::Zero)
+    [array]::Reverse($mods)
+    foreach ($m in $mods) { [RightPeekBench.Keys]::keybd_event($m, 0, $up, [UIntPtr]::Zero) }
 }
 
 # Private working set (MB) of a process tree, via the non-localized WMI class.
