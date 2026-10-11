@@ -1,4 +1,4 @@
-//! App wiring only. Logic lives in `core`, OS calls in `platform` (PLAN.md §3).
+//! App wiring only. Logic lives in `core`, OS calls in `platform` (docs/PLAN.md §3).
 
 pub mod core;
 pub mod platform;
