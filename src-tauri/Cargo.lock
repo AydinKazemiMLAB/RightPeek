@@ -2490,6 +2490,7 @@ version = "0.1.0"
 dependencies = [
  "tauri",
  "tauri-build",
+ "windows",
 ]
 
 [[package]]
