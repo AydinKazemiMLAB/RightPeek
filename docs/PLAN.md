@@ -24,7 +24,7 @@
 
 **Non-goals (for v1)**
 - Injecting items into other apps' right-click menus (not possible system-wide on Windows).
-- Browser extension / browser right-click entry (planned as Phase 5, dropped 2026-10-13: outside the project's core; the hotkey already works in browsers).
+- Browser extension / browser right-click entry, and a floating button shown near the cursor after a selection (both planned as phases, dropped 2026-10-13: outside the project's core; the hotkey already covers these cases).
 - Translation, OCR, AI features, cloud sync.
 - Admin/elevated target windows (UIPI blocks input from a normal process). Document it; don't work around it.
 
@@ -52,7 +52,7 @@
 │   ▲                                                             │
 │   │ trait SelectionProvider                                     │
 │ platform/   windows.rs  (UIA + clipboard fallback)              │
-│             macos.rs / linux.rs   (Phase 6)                     │
+│             macos.rs / linux.rs   (Phase 5)                     │
 └───────────────┬─────────────────────────────────────────────────┘
                 │ invoke("take_pending_text")  (pull, no race)
 ┌───────────────▼──────────── Viewer (WebView) ──────────────────┐
@@ -217,11 +217,7 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [x] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
 - Decisions (2026-10-12): NSIS only; no updater yet; signing deferred; "fresh VM" = CI runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
-### Phase 5 — Optional floating button
-- [ ] Opt-in only. Prefer UIA `TextSelectionChanged` events over mouse hooks. Show a small button near the cursor after a selection; click → same flow.
-- [ ] **Done when:** no measurable idle CPU increase; can be fully disabled.
-
-### Phase 6 — Cross-platform
+### Phase 5 — Cross-platform
 - [ ] **macOS:** Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization.
 - [ ] **Linux X11:** read PRIMARY selection directly. **Wayland:** GlobalShortcuts portal or DE-bound shortcut running `app --show`; `wl-paste --primary` fallback.
 - [ ] `core/` must not change; only `platform/*` and bundling.
