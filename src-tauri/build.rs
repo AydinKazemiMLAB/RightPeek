@@ -6,10 +6,10 @@ fn main() {
         "viewer_ready",
         "set_font_size",
         "set_justify",
+        "open_settings",
         "get_settings",
         "set_hotkey",
         "set_autostart",
-        "set_prewarm",
         "set_logging",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))

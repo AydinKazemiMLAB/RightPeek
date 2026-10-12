@@ -40,17 +40,11 @@ pub fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     settings::load(app);
     let state = app.state::<AppState>();
-    let (log_enabled, prewarm) = {
-        let settings = lock(&state.settings);
-        (settings.logging, settings.prewarm)
-    };
+    let log_enabled = lock(&state.settings).logging;
     logging::init(app, log_enabled);
     logging::info(&format!("RightPeek {} started", env!("CARGO_PKG_VERSION")));
     hotkey::register_from_settings(app);
     tray::create(app)?;
-    if prewarm {
-        viewer::prewarm(app);
-    }
     // Without a working hotkey the app is unusable: let the user pick another.
     if lock(&state.hotkey_error).is_some() {
         settings::open_window(app);

@@ -35,10 +35,13 @@ and for pull requests that touch packaging. Run it locally after
 No auto-updater for now (decided in Phase 4): the repository is private, so
 clients could not download updates from its releases.
 
-## Code signing (SignPath Foundation, planned)
+## Code signing (deferred)
 
-Free signing for open-source projects. The certificate is issued to
-"SignPath Foundation", which then appears as the publisher. Prerequisites,
+Not needed for now (decided 2026-10-12): releases are unsigned, so Windows
+SmartScreen warns on first run ("More info" → "Run anyway"). When it is
+picked up again, the plan is SignPath Foundation: free signing for open-source
+projects. The certificate is issued to "SignPath Foundation", which then
+appears as the publisher. Prerequisites,
 from https://signpath.org/terms:
 
 - [ ] An OSI-approved license for all code (no commercial dual licensing).

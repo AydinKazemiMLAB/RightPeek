@@ -2,7 +2,7 @@ name: Release
 
 # Builds the NSIS installer, smoke-tests install/uninstall on clean Windows
 # runners, and (for a v* tag) attaches it to a draft GitHub release that a
-# person reviews and publishes. Code signing will be added here (SignPath).
+# person reviews and publishes. Unsigned for now (docs/release.md).
 on:
   push:
     tags: ["v*"]
