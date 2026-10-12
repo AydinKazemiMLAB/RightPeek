@@ -58,8 +58,16 @@ The "Done when" criterion (no panics, budgets met) holds. Memory is not flat:
 the app process grows about 9 KB per viewer opened (6.9 MB at round 30,
 9.7 MB at round 190). Removing a window reference cycle from the close handler
 did not change the trend (an earlier run went 1.6 → 9.7 MB), so the growth
-is not that cycle. Still open: whether it comes from creating WebView2 windows
-(a soak with pre-warm on would tell) or is allocator retention that levels off.
+is not that cycle.
+
+A 10-minute soak with pre-warm on (the viewer is hidden, never destroyed) stayed
+flat: 66 rounds, 66 captures, 66 notices, no other warnings, 4.6 MB at round 10
+and 4.7 MB at round 60 (pre-warm off grew about 1.1 MB over the same 60
+rounds). So the growth comes from creating and destroying the viewer window,
+not from capture or rendering. Our per-window code holds no references after
+close, so it is likely inside Tauri/WebView2 window setup. At about 9 KB per
+open it would take roughly 2,000 opens without a restart to reach the 20 MB
+idle budget; accepted for now, worth re-checking when Tauri is upgraded.
 
 Soak harness fixes from this phase: find the viewer by its title, stop if the
 screen locks, keep both test windows open for the whole run (closing the
