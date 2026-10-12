@@ -18,6 +18,8 @@ $exe = "$installDir\rightpeek.exe"
 $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$product"
 $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $shortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\$product.lnk"
+$appSwitchedKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FeatureUsage\AppSwitched'
+$compatKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Compatibility Assistant\Store'
 $failures = [System.Collections.Generic.List[string]]::new()
 
 function Check([bool]$ok, [string]$what) {
@@ -52,8 +54,13 @@ Stop-Process -Id $app.Id -Force -ErrorAction SilentlyContinue
 $app.WaitForExit(10000) | Out-Null
 
 "Uninstall"
-# Simulate "Start with Windows" so the test proves the uninstaller removes it.
+# Simulate "Start with Windows" and Windows' own usage records so the test
+# proves the uninstaller removes them (a 5 s silent run may not create them).
 Set-ItemProperty $runKey -Name $product -Value "`"$exe`""
+if (-not (Test-Path $appSwitchedKey)) { New-Item $appSwitchedKey -Force | Out-Null }
+if (-not (Test-Path $compatKey)) { New-Item $compatKey -Force | Out-Null }
+New-ItemProperty $appSwitchedKey -Name $exe -Value 1 -PropertyType DWord -Force | Out-Null
+New-ItemProperty $compatKey -Name $exe -Value ([byte[]](0, 0)) -PropertyType Binary -Force | Out-Null
 $uninstaller = "$installDir\uninstall.exe"
 Check (Test-Path $uninstaller) 'uninstaller present'
 # The NSIS uninstaller copies itself to %TEMP% and returns at once, so poll.
@@ -62,6 +69,9 @@ Check (Wait-Until { -not (Test-Path $exe) }) 'exe removed'
 Check (Wait-Until { -not (Test-Path $uninstallKey) }) 'removed from Installed apps'
 Check (-not (Test-Path $shortcut)) 'Start menu shortcut removed'
 Check (Wait-Until { $null -eq (Get-ItemProperty $runKey -Name $product -ErrorAction SilentlyContinue) } 10) 'Start with Windows entry removed'
+function Has-Value($key, $name) { $null -ne (Get-ItemProperty $key -Name $name -ErrorAction SilentlyContinue) }
+Check (-not (Has-Value $appSwitchedKey $exe)) 'Explorer app-switch record removed'
+Check (-not (Has-Value $compatKey $exe)) 'Compatibility Assistant record removed'
 
 if ($failures.Count) {
     "FAILED: $($failures.Count) check(s)"

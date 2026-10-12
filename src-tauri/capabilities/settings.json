@@ -1,13 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "Settings window: read settings, change the hotkey, autostart and logging, close itself.",
+  "description": "Settings window: read settings, change the hotkey, autostart, logging and showing Settings at start-up, close itself.",
   "windows": ["settings"],
   "permissions": [
     "core:window:allow-close",
     "allow-get-settings",
     "allow-set-hotkey",
     "allow-set-autostart",
-    "allow-set-logging"
+    "allow-set-logging",
+    "allow-set-show-settings-on-start"
   ]
 }

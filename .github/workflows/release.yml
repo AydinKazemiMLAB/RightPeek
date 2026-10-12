@@ -1,8 +1,8 @@
 name: Release
 
-# Builds the NSIS installer, smoke-tests install/uninstall on clean Windows
-# runners, and (for a v* tag) attaches it to a draft GitHub release that a
-# person reviews and publishes. Unsigned for now (docs/release.md).
+# Builds the NSIS installer and the portable exe, smoke-tests both on clean
+# Windows runners, and (for a v* tag) attaches them to a draft GitHub release
+# that a person reviews and publishes. Unsigned for now (docs/release.md).
 on:
   push:
     tags: ["v*"]
@@ -45,10 +45,18 @@ jobs:
       - name: Build installer
         run: npm run tauri build
 
+      # The app is one self-contained exe; the portable build is that exe.
+      - name: Collect release files
+        run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          mkdir out
+          cp src-tauri/target/release/bundle/nsis/*-setup.exe out/
+          cp src-tauri/target/release/rightpeek.exe "out/RightPeek_${version}_x64-portable.exe"
+
       - uses: actions/upload-artifact@v4
         with:
           name: installer
-          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+          path: out/*.exe
           if-no-files-found: error
 
   smoke:
@@ -73,6 +81,14 @@ jobs:
           $setup = (Get-ChildItem installer\*-setup.exe).FullName
           powershell -ExecutionPolicy Bypass -File scripts\installer-smoke.ps1 -Installer $setup
 
+      - name: Portable exe starts
+        shell: pwsh
+        run: |
+          $app = Start-Process (Get-ChildItem installer\*-portable.exe).FullName -PassThru
+          Start-Sleep 5
+          if ($app.HasExited) { throw "portable exe exited with code $($app.ExitCode)" }
+          Stop-Process -Id $app.Id -Force
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: smoke
@@ -88,4 +104,4 @@ jobs:
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" installer/*-setup.exe --repo "$GITHUB_REPOSITORY" --draft --generate-notes --title "RightPeek $GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" installer/*.exe --repo "$GITHUB_REPOSITORY" --draft --generate-notes --title "RightPeek $GITHUB_REF_NAME"

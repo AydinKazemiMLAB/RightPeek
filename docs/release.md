@@ -5,8 +5,11 @@
 - Tauri NSIS bundle (`src-tauri/tauri.conf.json` → `bundle`): per-user install
   to `%LOCALAPPDATA%\RightPeek`, no UAC prompt. WebView2 is downloaded silently
   by the bootstrapper only when missing. No MSI (NSIS only, decided in Phase 4).
-- `src-tauri/windows/hooks.nsh` removes the "Start with Windows" Run entry on a
-  real uninstall (kept when an update reinstalls). The template's own
+- `src-tauri/windows/hooks.nsh` removes, on a real uninstall (not on update),
+  the "Start with Windows" Run entry and Windows' per-user usage records for
+  the install path (Explorer `FeatureUsage\AppSwitched`, Program Compatibility
+  Assistant `Store`). `C:\Windows\Prefetch` is not touched: admin only, and
+  Windows recycles it. The template's own
   "Delete the application data" box removes `%APPDATA%` / `%LOCALAPPDATA%`
   `com.rightpeek.app` (settings, logs, WebView2 cache).
 - The template checks whether RightPeek is running before installing or
@@ -14,11 +17,15 @@
 - Icons come from `app-icon.png` (1024 px master): `npm run tauri icon app-icon.png`,
   then delete the generated `android/` and `ios/` folders.
 
+- Portable build: the release exe itself, published as
+  `RightPeek_<version>_x64-portable.exe` (needs WebView2 already installed).
+
 ## Smoke test
 
 `scripts/installer-smoke.ps1` installs silently, launches the app, uninstalls
 silently and checks that the exe, the Installed apps entry, the Start menu
-shortcut and the Run entry are gone. CI runs it on `windows-2022` and
+shortcut, the Run entry and the usage records are gone. CI also checks that
+the portable exe starts. CI runs it on `windows-2022` and
 `windows-2025` (closest hosted images to Windows 10 and 11) for every release
 and for pull requests that touch packaging. Run it locally after
 `npm run tauri build` with RightPeek closed.
@@ -30,7 +37,7 @@ and for pull requests that touch packaging. Run it locally after
 2. Tag `vX.Y.Z` on `main` and push the tag (ask the maintainer first: it is
    irreversible).
 3. `.github/workflows/release.yml` builds, smoke-tests and creates a **draft**
-   release with the installer. Review it and publish by hand.
+   release with the installer and the portable exe. Review it and publish by hand.
 
 No auto-updater for now (decided in Phase 4): the repository is private, so
 clients could not download updates from its releases.

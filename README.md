@@ -12,6 +12,15 @@ It installs for the current user only (no administrator rights needed).
 Windows 10 and 11 are supported; if the Microsoft Edge WebView2 runtime is
 missing (Windows 11 always has it), the installer downloads it from Microsoft.
 
+**Portable:** `RightPeek_<version>_x64-portable.exe` runs without installing.
+It needs WebView2 already present, has no Start menu entry or uninstaller, and
+still keeps its settings in `%APPDATA%\com.rightpeek.app`. Turn off "Start
+RightPeek when Windows starts" before deleting or moving the exe.
+
+On start, RightPeek opens its Settings window so you can see it is running;
+untick "Open this window when RightPeek starts" to start quietly in the tray.
+Starting with Windows is always quiet.
+
 ## Use
 
 1. Select text in any app.
@@ -25,7 +34,9 @@ for normal apps.
 ## Uninstall
 
 Settings → Apps → Installed apps → RightPeek → Uninstall. The uninstaller also
-removes the "Start with Windows" entry. Tick "Delete the application data" to
+removes the "Start with Windows" entry and the records Windows keeps about the
+exe in your user registry. `C:\Windows\Prefetch` files are managed by Windows
+(admin only) and recycled automatically. Tick "Delete the application data" to
 remove settings and logs as well.
 
 ## Privacy
