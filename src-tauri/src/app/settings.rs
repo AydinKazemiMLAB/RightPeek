@@ -1,16 +1,26 @@
 //! Settings persistence (store plugin), the settings window and its commands.
 
+use std::collections::HashMap;
+use std::error::Error;
+
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_store::StoreExt as _;
 
 use super::{AppState, hotkey, lock, logging, tray};
-use crate::core::settings::{Settings, normalize_hotkey};
+use crate::core::settings::{Settings, normalize_hotkey, strip_utf8_bom};
 
 pub const LABEL: &str = "settings";
 const STORE_FILE: &str = "settings.json";
 const STORE_KEY: &str = "settings";
+
+/// Store file parser: plain JSON, tolerating a BOM from a hand edit.
+pub fn deserialize_store(bytes: &[u8]) -> Result<StoreMap, Box<dyn Error + Send + Sync>> {
+    serde_json::from_slice(strip_utf8_bom(bytes)).map_err(Into::into)
+}
+
+type StoreMap = HashMap<String, serde_json::Value>;
 
 /// Loads stored settings into state; invalid or missing values fall back to
 /// defaults.
