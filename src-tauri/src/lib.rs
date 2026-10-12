@@ -38,6 +38,7 @@ pub fn run() {
             app::viewer::take_pending_text,
             app::viewer::viewer_ready,
             app::viewer::set_font_size,
+            app::viewer::set_justify,
             app::viewer::set_prewarm,
             app::settings::get_settings,
             app::settings::set_hotkey,

@@ -103,8 +103,10 @@ body {
   background: var(--button-hover);
 }
 
-.toolbar .close {
-  margin-inline-start: auto;
+.toolbar button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
 }
 
 .status {
@@ -124,6 +126,10 @@ body {
   text-align: start;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.viewer.justify > p {
+  text-align: justify;
 }
 
 .viewer p.gap {
