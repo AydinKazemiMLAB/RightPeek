@@ -21,3 +21,21 @@ Notes:
   file cache); run 2 is a typical cold viewer. Cross-check for idle memory:
   working set 12.5 MB including shared pages, private bytes 2.1 MB.
 - Cold-start mitigation is planned for Phase 3 (optional pre-warm viewer).
+
+## Phase 3 (2026-10-12)
+
+Default settings (pre-warm off, logging off), hotkey Ctrl+Shift+Space.
+
+| Metric | Target | Result | Status |
+|---|---|---|---|
+| Idle RAM, app only (private working set) | ≤ 20 MB | 1.6 MB | ✅ |
+| RAM with viewer open (incl. WebView2) | ≤ 120 MB | 91 MB | ✅ |
+| Hotkey → text visible, warm | ≤ 300 ms | 44 ms | ✅ |
+| Hotkey → text visible, cold webview | ≤ 600 ms | 412 ms | ✅ |
+| CPU while idle | ~0% | 0% | ✅ |
+| Release exe | — | 4.85 MB | — |
+
+With pre-warm on, the hidden viewer exists from startup and the first capture
+showed text in 63 ms (the viewer then stays alive, so idle RAM includes
+WebView2, about 90 MB; that is why it is opt-in). The installer was not
+rebuilt in this phase; Phase 2 measured 1.59 MB.
