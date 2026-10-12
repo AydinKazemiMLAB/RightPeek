@@ -1,7 +1,7 @@
 # RightPeek — Project Plan
 
 > Working name: **RightPeek**.
-> A tiny tray app: the user selects text anywhere, presses a hotkey (later: right-click in the browser), and a window opens showing that text laid out correctly right-to-left.
+> A tiny tray app: the user selects text anywhere, presses a hotkey, and a window opens showing that text laid out correctly right-to-left.
 > Stack: **Tauri 2 + Rust** backend, **vanilla TypeScript + Vite** frontend. Windows first; macOS/Linux later.
 
 ---
@@ -24,6 +24,7 @@
 
 **Non-goals (for v1)**
 - Injecting items into other apps' right-click menus (not possible system-wide on Windows).
+- Browser extension / browser right-click entry (planned as Phase 5, dropped 2026-10-13: outside the project's core; the hotkey already works in browsers).
 - Translation, OCR, AI features, cloud sync.
 - Admin/elevated target windows (UIPI blocks input from a normal process). Document it; don't work around it.
 
@@ -51,7 +52,7 @@
 │   ▲                                                             │
 │   │ trait SelectionProvider                                     │
 │ platform/   windows.rs  (UIA + clipboard fallback)              │
-│             macos.rs / linux.rs   (Phase 7)                     │
+│             macos.rs / linux.rs   (Phase 6)                     │
 └───────────────┬─────────────────────────────────────────────────┘
                 │ invoke("take_pending_text")  (pull, no race)
 ┌───────────────▼──────────── Viewer (WebView) ──────────────────┐
@@ -64,7 +65,7 @@ Key decisions:
 - **Tray-resident, windowless when idle.** Create the viewer with `WebviewWindowBuilder` on demand; **destroy** it on close (not hide). Keep the process alive with `RunEvent::ExitRequested { api, .. } => api.prevent_exit()`.
 - **Pull, don't push.** Rust stores the captured text in managed state; the page calls `take_pending_text` on load. Avoids event-before-listener races.
 - **Platform trait.** `trait SelectionProvider { fn capture(&self, timeout: Duration) -> Result<Captured, CaptureError>; }` with `Captured { text, method: Uia | Clipboard }`.
-- **Second launch / extension input** goes through the single-instance plugin (args forwarded to the running instance).
+- **Second launch** goes through the single-instance plugin (args forwarded to the running instance).
 - **Frontend has no framework.** Vanilla TS keeps the bundle tiny.
 
 ### Repo layout
@@ -80,7 +81,6 @@ Key decisions:
 │  ├─ src/platform/{mod,windows}.rs
 │  ├─ capabilities/              # Tauri v2 permissions (least privilege)
 │  └─ tauri.conf.json
-└─ extension/                    # Phase 5 (MV3 + native messaging host)
 ```
 
 ---
@@ -138,9 +138,6 @@ npx skills add https://github.com/leonardomso/rust-skills --skill rust-skills -a
 
 # 4) Optional — RTL/bidi web patterns (Hebrew-focused; pick only the RTL skill)
 npx skills add https://github.com/skills-il/localization --list
-
-# 5) Phase 5 only — Chrome extension (MV3)
-npx skills add https://github.com/samber/cc-skills --skill chrome-extension -a claude-code -y
 ```
 
 Do **not** install: `full-statck-skills/*` (misspelled look-alike repo), `cruldra/skills tauri-v2` (failed a security audit).
@@ -220,16 +217,11 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [x] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
 - Decisions (2026-10-12): NSIS only; no updater yet; signing deferred; "fresh VM" = CI runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
-### Phase 5 — Browser right-click (Chrome/Edge)
-- [ ] MV3 extension: `contextMenus` with `contexts: ["selection"]` → native messaging → host binary (a tiny mode of the app or separate exe) → forwards text to the running instance.
-- [ ] Register native-messaging host in the installer.
-- [ ] **Done when:** right-click → "Show RTL" opens the viewer with long texts (≥ 100 KB) intact.
-
-### Phase 6 — Optional floating button
+### Phase 5 — Optional floating button
 - [ ] Opt-in only. Prefer UIA `TextSelectionChanged` events over mouse hooks. Show a small button near the cursor after a selection; click → same flow.
 - [ ] **Done when:** no measurable idle CPU increase; can be fully disabled.
 
-### Phase 7 — Cross-platform
+### Phase 6 — Cross-platform
 - [ ] **macOS:** Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization.
 - [ ] **Linux X11:** read PRIMARY selection directly. **Wayland:** GlobalShortcuts portal or DE-bound shortcut running `app --show`; `wl-paste --primary` fallback.
 - [ ] `core/` must not change; only `platform/*` and bundling.
