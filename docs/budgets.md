@@ -73,3 +73,15 @@ idle budget; accepted for now, worth re-checking when Tauri is upgraded.
 Soak harness fixes from this phase: find the viewer by its title, stop if the
 screen locks, keep both test windows open for the whole run (closing the
 active window left keyboard focus unreliable).
+
+## Phase 4 (2026-10-13)
+
+| Metric | Result |
+|---|---|
+| NSIS installer | 1.70 MB |
+| Release / portable exe | 4.87 MB |
+| CI smoke test (install, run, uninstall, leftovers) | passes on `windows-2022` and `windows-2025` |
+
+Runtime budgets were not re-measured: Phase 4 only removed the pre-warm path
+and added toolbar/settings controls; capture and rendering are unchanged
+since the Phase 3 numbers above.
