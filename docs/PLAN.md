@@ -203,20 +203,21 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [x] Logging (rotating file, off by default in release). Optional "pre-warm viewer" setting (added, then removed in Phase 4).
 - [x] **Done when:** no panics in a 30-minute manual soak; budgets still met.
 
-### Phase 4 — Packaging & release
+### Phase 4 — Packaging & release ✅
 - [x] Tauri bundler: NSIS installer, per-user install (no MSI). WebView2 download bootstrapper (silent, only when missing).
 - [x] Uninstall cleanup: "Start with Windows" Run entry removed (kept on update); app data removed on request.
 - [x] Installer smoke test (`scripts/installer-smoke.ps1`): silent install, launch, silent uninstall, no leftovers.
 - [x] Portable exe published next to the installer (`RightPeek_<version>_x64-portable.exe`).
 - [x] Uninstall also drops Windows' per-user usage records for the exe (AppSwitched, Compatibility Assistant); Prefetch is left to Windows (admin only).
 - [x] Setting "Open this window when RightPeek starts" (on by default) so a first run is noticed; sign-in autostart (`--autostart`) stays quiet.
-- [ ] Release workflow in CI (`release.yml`: build, smoke test on `windows-2022`/`windows-2025`, draft release on `v*` tags) — written, not yet run on GitHub.
+- [x] Settings window height fits its content (no empty band; grows when a message appears).
+- [x] Release workflow in CI (`release.yml`: build, smoke test on `windows-2022`/`windows-2025`, draft release on `v*` tags) — green on PR #5; the tag/release path runs on the first `v*` tag.
 - [x] Manual install/uninstall on the maintainer's PC (2026-10-12; re-check after the latest uninstall changes).
 - [x] Viewer toolbar: Justify toggle (remembered), Settings button; the duplicate toolbar close button removed.
 - [x] Pre-warm setting removed (about 90 MB of idle RAM was too easy to opt into; cold start already meets its budget).
 - [ ] **Code signing** — deferred (2026-10-12). Plan: SignPath Foundation (needs an OSI license, a public repo and a first public release); see `docs/release.md`.
 - [ ] Updater plugin — deferred: the repository is private, so clients could not download updates from its releases.
-- [ ] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
+- [x] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
 - Decisions (2026-10-12): NSIS only; no updater yet; signing deferred; "fresh VM" = CI runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
 ### Phase 5 — Browser right-click (Chrome/Edge)
