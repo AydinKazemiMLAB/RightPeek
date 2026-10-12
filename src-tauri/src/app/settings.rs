@@ -12,6 +12,8 @@ use super::{AppState, hotkey, lock, logging, tray};
 use crate::core::settings::{Settings, normalize_hotkey, strip_utf8_bom};
 
 pub const LABEL: &str = "settings";
+/// Fixed width; settings.ts uses the same value when it fits the height.
+const SETTINGS_WIDTH: f64 = 460.0;
 const STORE_FILE: &str = "settings.json";
 const STORE_KEY: &str = "settings";
 
@@ -64,11 +66,12 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(460.0, 440.0)
+        // The page sets the height to fit its content, then shows the window.
+        .inner_size(SETTINGS_WIDTH, 400.0)
         .resizable(false)
         .maximizable(false)
         .center()
-        .focused(true)
+        .visible(false)
         .build();
     if let Err(error) = built {
         logging::error(&format!("cannot open settings: {error}"));

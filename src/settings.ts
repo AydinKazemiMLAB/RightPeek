@@ -2,7 +2,7 @@
 // showing Settings at start-up, and logging.
 // Validation and registration happen in Rust (core::settings, app::hotkey).
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 
 interface SettingsView {
   settings: {
@@ -95,6 +95,17 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+// Must match SETTINGS_WIDTH in src-tauri/src/app/settings.rs.
+const WINDOW_WIDTH = 460;
+const page = document.querySelector<HTMLElement>("main.settings")!;
+
+// The window is created hidden; size it to the content (no empty band at the
+// bottom), then show it. Messages that appear later grow it again.
+async function fitToContent(): Promise<void> {
+  const height = Math.ceil(page.getBoundingClientRect().height);
+  await getCurrentWindow().setSize(new LogicalSize(WINDOW_WIDTH, height));
+}
+
 async function load(): Promise<void> {
   const view = await invoke<SettingsView>("get_settings");
   hotkeyInput.value = view.settings.hotkey;
@@ -105,4 +116,16 @@ async function load(): Promise<void> {
   if (view.hotkeyError) showMessage(hotkeyMessage, view.hotkeyError, true);
 }
 
-void load();
+async function start(): Promise<void> {
+  try {
+    await load();
+    await fitToContent();
+  } finally {
+    const current = getCurrentWindow();
+    await current.show();
+    await current.setFocus();
+  }
+  new ResizeObserver(() => void fitToContent()).observe(page);
+}
+
+void start();
