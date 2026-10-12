@@ -1,16 +1,16 @@
 ﻿// Settings page: records a hotkey combination and toggles autostart,
-// pre-warm and logging.
+// showing Settings at start-up, and logging.
 // Validation and registration happen in Rust (core::settings, app::hotkey).
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 
 interface SettingsView {
   settings: {
     hotkey: string;
     autostart: boolean;
     fontSize: number;
-    prewarm: boolean;
     logging: boolean;
+    showSettingsOnStart: boolean;
   };
   hotkeyError: string | null;
   logDir: string | null;
@@ -31,8 +31,8 @@ const hotkeyInput = document.querySelector<HTMLInputElement>("#hotkey")!;
 const hotkeyMessage = document.querySelector<HTMLElement>("#hotkey-message")!;
 const autostartBox = document.querySelector<HTMLInputElement>("#autostart")!;
 const autostartMessage = document.querySelector<HTMLElement>("#autostart-message")!;
-const prewarmBox = document.querySelector<HTMLInputElement>("#prewarm")!;
 const loggingBox = document.querySelector<HTMLInputElement>("#logging")!;
+const showOnStartBox = document.querySelector<HTMLInputElement>("#show-on-start")!;
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
 
 function showMessage(element: HTMLElement, text: string, isError: boolean): void {
@@ -79,8 +79,10 @@ autostartBox.addEventListener("change", async () => {
   }
 });
 
-prewarmBox.addEventListener("change", async () => {
-  prewarmBox.checked = await invoke<boolean>("set_prewarm", { enabled: prewarmBox.checked });
+showOnStartBox.addEventListener("change", async () => {
+  showOnStartBox.checked = await invoke<boolean>("set_show_settings_on_start", {
+    enabled: showOnStartBox.checked,
+  });
 });
 
 loggingBox.addEventListener("change", async () => {
@@ -93,14 +95,37 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+// Must match SETTINGS_WIDTH in src-tauri/src/app/settings.rs.
+const WINDOW_WIDTH = 460;
+const page = document.querySelector<HTMLElement>("main.settings")!;
+
+// The window is created hidden; size it to the content (no empty band at the
+// bottom), then show it. Messages that appear later grow it again.
+async function fitToContent(): Promise<void> {
+  const height = Math.ceil(page.getBoundingClientRect().height);
+  await getCurrentWindow().setSize(new LogicalSize(WINDOW_WIDTH, height));
+}
+
 async function load(): Promise<void> {
   const view = await invoke<SettingsView>("get_settings");
   hotkeyInput.value = view.settings.hotkey;
   autostartBox.checked = view.settings.autostart;
-  prewarmBox.checked = view.settings.prewarm;
   loggingBox.checked = view.settings.logging;
+  showOnStartBox.checked = view.settings.showSettingsOnStart;
   if (view.logDir) logDir.textContent = `Folder: ${view.logDir}`;
   if (view.hotkeyError) showMessage(hotkeyMessage, view.hotkeyError, true);
 }
 
-void load();
+async function start(): Promise<void> {
+  try {
+    await load();
+    await fitToContent();
+  } finally {
+    const current = getCurrentWindow();
+    await current.show();
+    await current.setFocus();
+  }
+  new ResizeObserver(() => void fitToContent()).observe(page);
+}
+
+void start();

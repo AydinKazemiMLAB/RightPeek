@@ -125,6 +125,7 @@ async function copyAll(): Promise<void> {
 document.querySelector("#copy")!.addEventListener("click", () => void copyAll());
 document.querySelector("#smaller")!.addEventListener("click", () => void changeFontSize(-FONT_STEP));
 document.querySelector("#larger")!.addEventListener("click", () => void changeFontSize(FONT_STEP));
+document.querySelector("#settings")!.addEventListener("click", () => void invoke("open_settings"));
 justifyButton.addEventListener("click", async () => {
   applyJustify(await invoke<boolean>("set_justify", { enabled: !justify }));
 });
