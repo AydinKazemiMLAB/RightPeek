@@ -37,7 +37,8 @@ Default settings (pre-warm off, logging off), hotkey Ctrl+Shift+Space.
 
 With pre-warm on, the hidden viewer exists from startup and the first capture
 showed text in 63 ms (the viewer then stays alive, so idle RAM includes
-WebView2, about 90 MB; that is why it is opt-in). The installer was not
+WebView2, about 90 MB; that is why it is opt-in). The pre-warm setting was
+removed in Phase 4 for that RAM cost. The installer was not
 rebuilt in this phase; Phase 2 measured 1.59 MB.
 
 ### 30-minute soak
@@ -72,3 +73,15 @@ idle budget; accepted for now, worth re-checking when Tauri is upgraded.
 Soak harness fixes from this phase: find the viewer by its title, stop if the
 screen locks, keep both test windows open for the whole run (closing the
 active window left keyboard focus unreliable).
+
+## Phase 4 (2026-10-13)
+
+| Metric | Result |
+|---|---|
+| NSIS installer | 1.70 MB |
+| Release / portable exe | 4.87 MB |
+| CI smoke test (install, run, uninstall, leftovers) | passes on `windows-2022` and `windows-2025` |
+
+Runtime budgets were not re-measured: Phase 4 only removed the pre-warm path
+and added toolbar/settings controls; capture and rendering are unchanged
+since the Phase 3 numbers above.
