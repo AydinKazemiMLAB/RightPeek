@@ -38,7 +38,7 @@ $hotkeyVk = if ($Key -eq 'Space') { [byte]0x20 } else { [byte][char]$Key.ToUpper
 
 # The viewer is the only top-level window titled exactly "RightPeek".
 function Test-ViewerVisible {
-    $h = [RightPeekSoak.Keys]::FindWindow($null, 'RightPeek')
+    $h = [RightPeekSoak.Keys]::FindWindow([NullString]::Value, 'RightPeek')
     $h -ne [IntPtr]::Zero -and [RightPeekSoak.Keys]::IsWindowVisible($h)
 }
 
