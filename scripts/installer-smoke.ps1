@@ -56,9 +56,11 @@ $app.WaitForExit(10000) | Out-Null
 "Uninstall"
 # Simulate "Start with Windows" and Windows' own usage records so the test
 # proves the uninstaller removes them (a 5 s silent run may not create them).
+# A clean profile may not have these keys yet (seen on windows-2025).
+foreach ($key in $runKey, $appSwitchedKey, $compatKey) {
+    if (-not (Test-Path $key)) { New-Item $key -Force | Out-Null }
+}
 Set-ItemProperty $runKey -Name $product -Value "`"$exe`""
-if (-not (Test-Path $appSwitchedKey)) { New-Item $appSwitchedKey -Force | Out-Null }
-if (-not (Test-Path $compatKey)) { New-Item $compatKey -Force | Out-Null }
 New-ItemProperty $appSwitchedKey -Name $exe -Value 1 -PropertyType DWord -Force | Out-Null
 New-ItemProperty $compatKey -Name $exe -Value ([byte[]](0, 0)) -PropertyType Binary -Force | Out-Null
 $uninstaller = "$installDir\uninstall.exe"
