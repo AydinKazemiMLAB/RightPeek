@@ -12,7 +12,11 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             app::settings::open_window(app);
         }))
-        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(
+            tauri_plugin_store::Builder::new()
+                .default_deserialize_fn(app::settings::deserialize_store)
+                .build(),
+        )
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
