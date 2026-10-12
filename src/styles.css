@@ -103,6 +103,10 @@ body {
   background: var(--button-hover);
 }
 
+.toolbar .end {
+  margin-inline-start: auto;
+}
+
 .toolbar button[aria-pressed="true"] {
   background: var(--fg);
   color: var(--bg);

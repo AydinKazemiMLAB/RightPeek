@@ -173,56 +173,62 @@ Agent rules (also in the Kickoff Prompt):
 
 ## 8. Phases
 
-Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets measured (from Phase 2), a short Persian summary to the user, and a **stop for approval**.
+Progress is tracked with the checkboxes below (ticked when done and approved). Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets measured (from Phase 2), a short Persian summary to the user, and a **stop for approval**.
 
-### Phase 0 — Setup & scaffolding
-- `npm create tauri-app@latest` → vanilla TS template; Tauri 2.
-- Install skills (§6); write `CLAUDE.md` (≤ 40 lines: conventions, language rules, pointer to PLAN.md).
-- Write the custom skill `windows-text-capture` from §4.
-- Create `core/` and `platform/` modules + `SelectionProvider` trait (stub).
-- `graft init` (§7). Add GitHub Actions: `cargo fmt --check`, `clippy`, `cargo test`, `npm run build` on `windows-latest`.
-- **Done when:** app builds and runs an empty window; CI green; graft MCP visible in the session.
+### Phase 0 — Setup & scaffolding ✅
+- [x] `npm create tauri-app@latest` → vanilla TS template; Tauri 2.
+- [x] Install skills (§6); write `CLAUDE.md` (≤ 40 lines: conventions, language rules, pointer to PLAN.md).
+- [x] Write the custom skill `windows-text-capture` from §4.
+- [x] Create `core/` and `platform/` modules + `SelectionProvider` trait (stub).
+- [x] `graft init` (§7). Add GitHub Actions: `cargo fmt --check`, `clippy`, `cargo test`, `npm run build` on `windows-latest`.
+- [x] **Done when:** app builds and runs an empty window; CI green; graft MCP visible in the session.
 
-### Phase 1 — Capture spike (riskiest part first)
-- Implement `platform/windows.rs`: UIA path + clipboard fallback exactly per §4.
-- Small dev-only CLI (`cargo run --bin capture-probe`) that waits 3 s, captures, and prints method + text.
-- Test matrix (record results in `docs/capture-matrix.md`): Chrome, Edge, Firefox, Word, Notepad, VS Code, Windows Terminal, Telegram Desktop, a PDF reader, Outlook, File Explorer rename box.
-- **Done when:** ≥ 9/11 apps return correct text; clipboard verifiably restored; nothing appears in Win+V history.
+### Phase 1 — Capture spike (riskiest part first) ✅
+- [x] Implement `platform/windows.rs`: UIA path + clipboard fallback exactly per §4.
+- [x] Small dev-only CLI (`cargo run --bin capture-probe`) that waits 3 s, captures, and prints method + text.
+- [x] Test matrix (record results in `docs/capture-matrix.md`): Chrome, Edge, Firefox, Word, Notepad, VS Code, Windows Terminal, Telegram Desktop, a PDF reader, Outlook, File Explorer rename box.
+- [x] **Done when:** ≥ 9/11 apps return correct text; clipboard verifiably restored; nothing appears in Win+V history.
 
-### Phase 2 — MVP
-- Tray icon + menu (Show last, Settings, Quit). Global hotkey (default `Ctrl+Shift+Space`, configurable; changed from `Ctrl+Alt+Space`, which another app held on the test machine).
-- Single instance; autostart toggle; settings via store plugin.
-- Viewer window created on demand, destroyed on close; RTL rendering per §5; bundled font.
-- Least-privilege capabilities in `src-tauri/capabilities/`.
-- Core unit tests: paragraph split, normalization, ZWNJ preserved, direction detection.
-- **Done when:** full flow works end-to-end; budgets in §2 measured and reported.
+### Phase 2 — MVP ✅
+- [x] Tray icon + menu (Show last, Settings, Quit). Global hotkey (default `Ctrl+Shift+Space`, configurable; changed from `Ctrl+Alt+Space`, which another app held on the test machine).
+- [x] Single instance; autostart toggle; settings via store plugin.
+- [x] Viewer window created on demand, destroyed on close; RTL rendering per §5; bundled font.
+- [x] Least-privilege capabilities in `src-tauri/capabilities/`.
+- [x] Core unit tests: paragraph split, normalization, ZWNJ preserved, direction detection.
+- [x] **Done when:** full flow works end-to-end; budgets in §2 measured and reported.
 
-### Phase 3 — Hardening & polish
-- Clear UX for: nothing selected, elevated window, capture timeout.
-- Hotkey conflict detection + UI to rebind. Window-state persistence. Light/dark.
-- Logging (rotating file, off by default in release). Optional "pre-warm viewer" setting if cold start misses budget.
-- **Done when:** no panics in a 30-minute manual soak; budgets still met.
+### Phase 3 — Hardening & polish ✅
+- [x] Clear UX for: nothing selected, elevated window, capture timeout.
+- [x] Hotkey conflict detection + UI to rebind. Window-state persistence. Light/dark.
+- [x] Logging (rotating file, off by default in release). Optional "pre-warm viewer" setting (added, then removed in Phase 4).
+- [x] **Done when:** no panics in a 30-minute manual soak; budgets still met.
 
 ### Phase 4 — Packaging & release
-- Tauri bundler: NSIS installer (+ MSI optional). WebView2 bootstrapper config.
-- **Code signing** (reduces SmartScreen/AV flags — important for an app that sends keystrokes and reads the clipboard).
-- Optional updater plugin with signing keys. Release workflow in CI.
-- **Done when:** signed installer from CI installs/uninstalls cleanly on a fresh Windows 10 and 11 VM.
-- Decisions (2026-10-12): NSIS only (no MSI); per-user install; WebView2 via the download bootstrapper; no updater yet (private repo); signing through SignPath Foundation (needs an OSI license, a public repo and a first public release); "fresh VM" = CI smoke test on `windows-2022`/`windows-2025` runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
+- [x] Tauri bundler: NSIS installer, per-user install (no MSI). WebView2 download bootstrapper (silent, only when missing).
+- [x] Uninstall cleanup: "Start with Windows" Run entry removed (kept on update); app data removed on request.
+- [x] Installer smoke test (`scripts/installer-smoke.ps1`): silent install, launch, silent uninstall, no leftovers.
+- [ ] Release workflow in CI (`release.yml`: build, smoke test on `windows-2022`/`windows-2025`, draft release on `v*` tags) — written, not yet run on GitHub.
+- [ ] Manual install/uninstall on the maintainer's PC.
+- [x] Viewer toolbar: Justify toggle (remembered), Settings button; the duplicate toolbar close button removed.
+- [x] Pre-warm setting removed (about 90 MB of idle RAM was too easy to opt into; cold start already meets its budget).
+- [ ] **Code signing** — deferred (2026-10-12). Plan: SignPath Foundation (needs an OSI license, a public repo and a first public release); see `docs/release.md`.
+- [ ] Updater plugin — deferred: the repository is private, so clients could not download updates from its releases.
+- [ ] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
+- Decisions (2026-10-12): NSIS only; no updater yet; signing deferred; "fresh VM" = CI runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
 ### Phase 5 — Browser right-click (Chrome/Edge)
-- MV3 extension: `contextMenus` with `contexts: ["selection"]` → native messaging → host binary (a tiny mode of the app or separate exe) → forwards text to the running instance.
-- Register native-messaging host in the installer.
-- **Done when:** right-click → "Show RTL" opens the viewer with long texts (≥ 100 KB) intact.
+- [ ] MV3 extension: `contextMenus` with `contexts: ["selection"]` → native messaging → host binary (a tiny mode of the app or separate exe) → forwards text to the running instance.
+- [ ] Register native-messaging host in the installer.
+- [ ] **Done when:** right-click → "Show RTL" opens the viewer with long texts (≥ 100 KB) intact.
 
 ### Phase 6 — Optional floating button
-- Opt-in only. Prefer UIA `TextSelectionChanged` events over mouse hooks. Show a small button near the cursor after a selection; click → same flow.
-- **Done when:** no measurable idle CPU increase; can be fully disabled.
+- [ ] Opt-in only. Prefer UIA `TextSelectionChanged` events over mouse hooks. Show a small button near the cursor after a selection; click → same flow.
+- [ ] **Done when:** no measurable idle CPU increase; can be fully disabled.
 
 ### Phase 7 — Cross-platform
-- **macOS:** Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization.
-- **Linux X11:** read PRIMARY selection directly. **Wayland:** GlobalShortcuts portal or DE-bound shortcut running `app --show`; `wl-paste --primary` fallback.
-- `core/` must not change; only `platform/*` and bundling.
+- [ ] **macOS:** Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization.
+- [ ] **Linux X11:** read PRIMARY selection directly. **Wayland:** GlobalShortcuts portal or DE-bound shortcut running `app --show`; `wl-paste --primary` fallback.
+- [ ] `core/` must not change; only `platform/*` and bundling.
 
 ---
 
@@ -238,7 +244,7 @@ Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets mea
 | UIA unsupported in many apps | Clipboard fallback; matrix in Phase 1 decides early |
 | Antivirus flags (SendInput + clipboard) | No low-level hooks, code signing, clear description |
 | Clipboard restore imperfect | Snapshot common formats; document limits |
-| Cold WebView2 start too slow | Measure; optional pre-warm setting |
+| Cold WebView2 start too slow | Measure (412 ms, within budget); pre-warm tried and dropped for its RAM cost |
 | Wayland restrictions | Portal/DE shortcut path; document |
 
 ---

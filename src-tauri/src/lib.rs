@@ -39,7 +39,7 @@ pub fn run() {
             app::viewer::viewer_ready,
             app::viewer::set_font_size,
             app::viewer::set_justify,
-            app::viewer::set_prewarm,
+            app::settings::open_settings,
             app::settings::get_settings,
             app::settings::set_hotkey,
             app::settings::set_autostart,

@@ -37,7 +37,8 @@ Default settings (pre-warm off, logging off), hotkey Ctrl+Shift+Space.
 
 With pre-warm on, the hidden viewer exists from startup and the first capture
 showed text in 63 ms (the viewer then stays alive, so idle RAM includes
-WebView2, about 90 MB; that is why it is opt-in). The installer was not
+WebView2, about 90 MB; that is why it is opt-in). The pre-warm setting was
+removed in Phase 4 for that RAM cost. The installer was not
 rebuilt in this phase; Phase 2 measured 1.59 MB.
 
 ### 30-minute soak

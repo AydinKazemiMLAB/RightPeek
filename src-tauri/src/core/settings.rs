@@ -13,8 +13,6 @@ pub struct Settings {
     pub hotkey: String,
     pub autostart: bool,
     pub font_size: u8,
-    /// Keep a hidden viewer alive for a faster first open (costs RAM).
-    pub prewarm: bool,
     /// Write a rotating log file (diagnostics; never the captured text).
     pub logging: bool,
     /// Justify viewer paragraphs (both edges aligned) instead of ragged.
@@ -27,7 +25,6 @@ impl Default for Settings {
             hotkey: DEFAULT_HOTKEY.to_owned(),
             autostart: false,
             font_size: DEFAULT_FONT_SIZE,
-            prewarm: false,
             logging: cfg!(debug_assertions),
             justify: false,
         }
@@ -186,7 +183,6 @@ mod tests {
         assert_eq!(settings.hotkey, "Ctrl+Shift+Space");
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
-        assert!(!settings.prewarm, "pre-warm costs RAM, so it is opt-in");
         assert!(!settings.justify, "ragged edges are the default");
     }
 
@@ -209,7 +205,6 @@ mod tests {
             hotkey: "Ctrl+Shift+R".into(),
             autostart: true,
             font_size: 22,
-            prewarm: true,
             logging: true,
             justify: true,
         };
