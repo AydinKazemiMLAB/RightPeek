@@ -12,6 +12,8 @@ use super::{AppState, hotkey, lock, logging, tray};
 use crate::core::settings::{Settings, normalize_hotkey, strip_utf8_bom};
 
 pub const LABEL: &str = "settings";
+/// Fixed width; settings.ts uses the same value when it fits the height.
+const SETTINGS_WIDTH: f64 = 460.0;
 const STORE_FILE: &str = "settings.json";
 const STORE_KEY: &str = "settings";
 
@@ -64,15 +66,24 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(460.0, 380.0)
+        // The page sets the height to fit its content, then shows the window.
+        .inner_size(SETTINGS_WIDTH, 400.0)
         .resizable(false)
         .maximizable(false)
         .center()
-        .focused(true)
+        .visible(false)
         .build();
     if let Err(error) = built {
         logging::error(&format!("cannot open settings: {error}"));
     }
+}
+
+/// Viewer toolbar "Settings" button. Async on purpose: creating a window inside
+/// a synchronous command deadlocks the IPC on Windows (Tauri docs, "Create
+/// windows in commands").
+#[tauri::command]
+pub async fn open_settings(app: AppHandle) {
+    open_window(&app);
 }
 
 #[derive(Serialize)]
@@ -118,6 +129,13 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
+}
+
+#[tauri::command]
+pub fn set_show_settings_on_start(app: AppHandle, enabled: bool) -> bool {
+    lock(&app.state::<AppState>().settings).show_settings_on_start = enabled;
+    save(&app);
+    enabled
 }
 
 #[tauri::command]

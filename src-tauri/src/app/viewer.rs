@@ -1,6 +1,5 @@
-//! Viewer window: created on demand and destroyed on close (docs/PLAN.md §3),
-//! or kept hidden when the pre-warm setting is on. The page pulls its content
-//! with `take_pending_text` (no push race).
+//! Viewer window: created on demand and destroyed on close (docs/PLAN.md §3).
+//! The page pulls its content with `take_pending_text` (no push race).
 
 use std::io::Write;
 use std::time::Instant;
@@ -87,13 +86,6 @@ pub fn show(app: &AppHandle, content: ViewerContent, pressed_at: Option<Instant>
     }
 }
 
-/// Creates the viewer hidden so it opens instantly later (pre-warm setting).
-pub fn prewarm(app: &AppHandle) {
-    if app.get_webview_window(LABEL).is_none() {
-        build(app);
-    }
-}
-
 fn reveal(window: &WebviewWindow) {
     let _ = window.unminimize();
     let _ = window.show();
@@ -120,21 +112,14 @@ fn build(app: &AppHandle) -> Option<WebviewWindow> {
     // Look the window up instead of capturing a clone: a clone inside its own
     // event handler is a reference cycle that keeps every closed viewer alive.
     let handle = app.clone();
-    window.on_window_event(move |event| match event {
-        WindowEvent::CloseRequested { api, .. } => {
+    window.on_window_event(move |event| {
+        if matches!(
+            event,
+            WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed
+        ) {
             // Persist now: the plugin itself only writes on app exit.
             let _ = handle.save_window_state(WINDOW_STATE);
-            if lock(&handle.state::<AppState>().settings).prewarm {
-                api.prevent_close();
-                if let Some(viewer) = handle.get_webview_window(LABEL) {
-                    let _ = viewer.hide();
-                }
-            }
         }
-        WindowEvent::Destroyed => {
-            let _ = handle.save_window_state(WINDOW_STATE);
-        }
-        _ => {}
     });
     Some(window)
 }
@@ -196,23 +181,5 @@ pub fn set_font_size(app: AppHandle, state: State<'_, AppState>, size: u8) -> u8
 pub fn set_justify(app: AppHandle, state: State<'_, AppState>, enabled: bool) -> bool {
     lock(&state.settings).justify = enabled;
     settings::save(&app);
-    enabled
-}
-
-/// Turns pre-warm on (creates the hidden viewer) or off (drops it if hidden).
-/// Async on purpose: creating a window inside a synchronous command
-/// deadlocks the IPC on Windows (Tauri docs, "Create windows in commands").
-#[tauri::command]
-pub async fn set_prewarm(app: AppHandle, enabled: bool) -> bool {
-    lock(&app.state::<AppState>().settings).prewarm = enabled;
-    settings::save(&app);
-    if enabled {
-        prewarm(&app);
-    } else if let Some(window) = app.get_webview_window(LABEL)
-        && !window.is_visible().unwrap_or(true)
-    {
-        let _ = window.destroy();
-    }
-    logging::info(&format!("pre-warm {}", if enabled { "on" } else { "off" }));
     enabled
 }

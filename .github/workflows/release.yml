@@ -1,0 +1,107 @@
+name: Release
+
+# Builds the NSIS installer and the portable exe, smoke-tests both on clean
+# Windows runners, and (for a v* tag) attaches them to a draft GitHub release
+# that a person reviews and publishes. Unsigned for now (docs/release.md).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  # Smoke-test packaging changes before they merge (no release is created).
+  pull_request:
+    paths:
+      - src-tauri/tauri.conf.json
+      - src-tauri/windows/**
+      - src-tauri/icons/**
+      - scripts/installer-smoke.ps1
+      - .github/workflows/release.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build installer
+        run: npm run tauri build
+
+      # The app is one self-contained exe; the portable build is that exe.
+      - name: Collect release files
+        run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          mkdir out
+          cp src-tauri/target/release/bundle/nsis/*-setup.exe out/
+          cp src-tauri/target/release/rightpeek.exe "out/RightPeek_${version}_x64-portable.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: out/*.exe
+          if-no-files-found: error
+
+  smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        # Closest hosted images to Windows 10 / 11 clients.
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: installer
+
+      - name: Install, run, uninstall
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem installer\*-setup.exe).FullName
+          powershell -ExecutionPolicy Bypass -File scripts\installer-smoke.ps1 -Installer $setup
+
+      - name: Portable exe starts
+        shell: pwsh
+        run: |
+          $app = Start-Process (Get-ChildItem installer\*-portable.exe).FullName -PassThru
+          Start-Sleep 5
+          if ($app.HasExited) { throw "portable exe exited with code $($app.ExitCode)" }
+          Stop-Process -Id $app.Id -Force
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: installer
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" installer/*.exe --repo "$GITHUB_REPOSITORY" --draft --generate-notes --title "RightPeek $GITHUB_REF_NAME"
