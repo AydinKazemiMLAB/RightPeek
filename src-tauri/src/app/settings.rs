@@ -54,8 +54,9 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(460.0, 420.0)
+        .inner_size(460.0, 380.0)
         .resizable(false)
+        .maximizable(false)
         .center()
         .focused(true)
         .build();

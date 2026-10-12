@@ -187,8 +187,10 @@ pub fn set_font_size(app: AppHandle, state: State<'_, AppState>, size: u8) -> u8
 }
 
 /// Turns pre-warm on (creates the hidden viewer) or off (drops it if hidden).
+/// Async on purpose: creating a window inside a synchronous command
+/// deadlocks the IPC on Windows (Tauri docs, "Create windows in commands").
 #[tauri::command]
-pub fn set_prewarm(app: AppHandle, enabled: bool) -> bool {
+pub async fn set_prewarm(app: AppHandle, enabled: bool) -> bool {
     lock(&app.state::<AppState>().settings).prewarm = enabled;
     settings::save(&app);
     if enabled {
