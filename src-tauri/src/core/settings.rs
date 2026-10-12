@@ -17,6 +17,8 @@ pub struct Settings {
     pub prewarm: bool,
     /// Write a rotating log file (diagnostics; never the captured text).
     pub logging: bool,
+    /// Justify viewer paragraphs (both edges aligned) instead of ragged.
+    pub justify: bool,
 }
 
 impl Default for Settings {
@@ -27,6 +29,7 @@ impl Default for Settings {
             font_size: DEFAULT_FONT_SIZE,
             prewarm: false,
             logging: cfg!(debug_assertions),
+            justify: false,
         }
     }
 }
@@ -184,6 +187,7 @@ mod tests {
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
         assert!(!settings.prewarm, "pre-warm costs RAM, so it is opt-in");
+        assert!(!settings.justify, "ragged edges are the default");
     }
 
     #[test]
@@ -207,9 +211,11 @@ mod tests {
             font_size: 22,
             prewarm: true,
             logging: true,
+            justify: true,
         };
         let json = serde_json::to_value(&settings).unwrap();
         assert_eq!(json["fontSize"], 22);
+        assert_eq!(json["justify"], true);
         assert_eq!(serde_json::from_value::<Settings>(json).unwrap(), settings);
     }
 

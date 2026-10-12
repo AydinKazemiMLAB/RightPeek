@@ -5,6 +5,7 @@ fn main() {
         "take_pending_text",
         "viewer_ready",
         "set_font_size",
+        "set_justify",
         "get_settings",
         "set_hotkey",
         "set_autostart",

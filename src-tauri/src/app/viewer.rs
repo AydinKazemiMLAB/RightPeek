@@ -65,6 +65,7 @@ impl ViewerContent {
 pub struct ViewerPayload {
     content: ViewerContent,
     font_size: u8,
+    justify: bool,
 }
 
 /// Shows `content` in the viewer, creating the window if needed.
@@ -158,9 +159,11 @@ pub fn take_pending_text(state: State<'_, AppState>) -> ViewerPayload {
     let content = pending
         .or_else(|| lock(&state.last).clone())
         .unwrap_or_else(|| ViewerContent::notice("Nothing captured yet", ""));
+    let settings = lock(&state.settings);
     ViewerPayload {
         content,
-        font_size: lock(&state.settings).font_size,
+        font_size: settings.font_size,
+        justify: settings.justify,
     }
 }
 
@@ -187,6 +190,13 @@ pub fn set_font_size(app: AppHandle, state: State<'_, AppState>, size: u8) -> u8
     lock(&state.settings).font_size = size;
     settings::save(&app);
     size
+}
+
+#[tauri::command]
+pub fn set_justify(app: AppHandle, state: State<'_, AppState>, enabled: bool) -> bool {
+    lock(&state.settings).justify = enabled;
+    settings::save(&app);
+    enabled
 }
 
 /// Turns pre-warm on (creates the hidden viewer) or off (drops it if hidden).
