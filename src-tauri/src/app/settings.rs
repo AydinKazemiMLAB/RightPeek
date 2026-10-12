@@ -1,16 +1,26 @@
 //! Settings persistence (store plugin), the settings window and its commands.
 
+use std::collections::HashMap;
+use std::error::Error;
+
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_store::StoreExt as _;
 
-use super::{AppState, hotkey, lock};
-use crate::core::settings::{Settings, normalize_hotkey};
+use super::{AppState, hotkey, lock, logging, tray};
+use crate::core::settings::{Settings, normalize_hotkey, strip_utf8_bom};
 
 pub const LABEL: &str = "settings";
 const STORE_FILE: &str = "settings.json";
 const STORE_KEY: &str = "settings";
+
+/// Store file parser: plain JSON, tolerating a BOM from a hand edit.
+pub fn deserialize_store(bytes: &[u8]) -> Result<StoreMap, Box<dyn Error + Send + Sync>> {
+    serde_json::from_slice(strip_utf8_bom(bytes)).map_err(Into::into)
+}
+
+type StoreMap = HashMap<String, serde_json::Value>;
 
 /// Loads stored settings into state; invalid or missing values fall back to
 /// defaults.
@@ -41,7 +51,7 @@ pub fn save(app: &AppHandle) {
             store.save().map_err(|e| e.to_string())
         });
     if let Err(error) = saved {
-        eprintln!("RightPeek: cannot save settings: {error}");
+        logging::error(&format!("cannot save settings: {error}"));
     }
 }
 
@@ -54,13 +64,14 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(440.0, 300.0)
+        .inner_size(460.0, 380.0)
         .resizable(false)
+        .maximizable(false)
         .center()
         .focused(true)
         .build();
     if let Err(error) = built {
-        eprintln!("RightPeek: cannot open settings: {error}");
+        logging::error(&format!("cannot open settings: {error}"));
     }
 }
 
@@ -69,6 +80,7 @@ pub fn open_window(app: &AppHandle) {
 pub struct SettingsView {
     settings: Settings,
     hotkey_error: Option<String>,
+    log_dir: Option<String>,
 }
 
 #[tauri::command]
@@ -76,6 +88,7 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
     SettingsView {
         settings: lock(&state.settings).clone(),
         hotkey_error: lock(&state.hotkey_error).clone(),
+        log_dir: logging::dir().map(|dir| dir.display().to_string()),
     }
 }
 
@@ -83,9 +96,13 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
 #[tauri::command]
 pub fn set_hotkey(app: AppHandle, hotkey: String) -> Result<String, String> {
     let hotkey = normalize_hotkey(&hotkey).map_err(|e| e.to_string())?;
-    hotkey::replace(&app, &hotkey)?;
-    lock(&app.state::<AppState>().settings).hotkey = hotkey.clone();
-    save(&app);
+    let replaced = hotkey::replace(&app, &hotkey);
+    if replaced.is_ok() {
+        lock(&app.state::<AppState>().settings).hotkey = hotkey.clone();
+        save(&app);
+    }
+    tray::refresh_tooltip(&app);
+    replaced?;
     Ok(hotkey)
 }
 
@@ -101,4 +118,18 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
+}
+
+#[tauri::command]
+pub fn set_logging(app: AppHandle, enabled: bool) -> bool {
+    if !enabled {
+        logging::info("logging off");
+    }
+    logging::set_enabled(enabled);
+    if enabled {
+        logging::info("logging on");
+    }
+    lock(&app.state::<AppState>().settings).logging = enabled;
+    save(&app);
+    enabled
 }

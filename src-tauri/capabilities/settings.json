@@ -1,12 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "Settings window: read settings, change the hotkey and autostart, close itself.",
+  "description": "Settings window: read settings, change the hotkey, autostart, pre-warm and logging, close itself.",
   "windows": ["settings"],
   "permissions": [
     "core:window:allow-close",
     "allow-get-settings",
     "allow-set-hotkey",
-    "allow-set-autostart"
+    "allow-set-autostart",
+    "allow-set-prewarm",
+    "allow-set-logging"
   ]
 }

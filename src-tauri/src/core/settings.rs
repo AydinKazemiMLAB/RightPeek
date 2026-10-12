@@ -13,6 +13,12 @@ pub struct Settings {
     pub hotkey: String,
     pub autostart: bool,
     pub font_size: u8,
+    /// Keep a hidden viewer alive for a faster first open (costs RAM).
+    pub prewarm: bool,
+    /// Write a rotating log file (diagnostics; never the captured text).
+    pub logging: bool,
+    /// Justify viewer paragraphs (both edges aligned) instead of ragged.
+    pub justify: bool,
 }
 
 impl Default for Settings {
@@ -21,6 +27,9 @@ impl Default for Settings {
             hotkey: DEFAULT_HOTKEY.to_owned(),
             autostart: false,
             font_size: DEFAULT_FONT_SIZE,
+            prewarm: false,
+            logging: cfg!(debug_assertions),
+            justify: false,
         }
     }
 }
@@ -161,6 +170,12 @@ pub fn clamp_font_size(size: u8) -> u8 {
     size.clamp(MIN_FONT_SIZE, MAX_FONT_SIZE)
 }
 
+/// Drops a leading UTF-8 byte order mark. Some Windows editors add one when
+/// saving, and JSON parsers reject it, which would silently reset settings.
+pub fn strip_utf8_bom(bytes: &[u8]) -> &[u8] {
+    bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,6 +186,13 @@ mod tests {
         assert_eq!(settings.hotkey, "Ctrl+Shift+Space");
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
+        assert!(!settings.prewarm, "pre-warm costs RAM, so it is opt-in");
+        assert!(!settings.justify, "ragged edges are the default");
+    }
+
+    #[test]
+    fn logging_is_on_in_debug_builds_only() {
+        assert_eq!(Settings::default().logging, cfg!(debug_assertions));
     }
 
     #[test]
@@ -187,9 +209,13 @@ mod tests {
             hotkey: "Ctrl+Shift+R".into(),
             autostart: true,
             font_size: 22,
+            prewarm: true,
+            logging: true,
+            justify: true,
         };
         let json = serde_json::to_value(&settings).unwrap();
         assert_eq!(json["fontSize"], 22);
+        assert_eq!(json["justify"], true);
         assert_eq!(serde_json::from_value::<Settings>(json).unwrap(), settings);
     }
 
@@ -261,5 +287,23 @@ mod tests {
         assert_eq!(clamp_font_size(4), MIN_FONT_SIZE);
         assert_eq!(clamp_font_size(200), MAX_FONT_SIZE);
         assert_eq!(clamp_font_size(20), 20);
+    }
+
+    #[test]
+    fn utf8_bom_is_stripped() {
+        assert_eq!(strip_utf8_bom(b"\xEF\xBB\xBF{}"), b"{}");
+    }
+
+    #[test]
+    fn text_without_bom_is_unchanged() {
+        assert_eq!(strip_utf8_bom(b"{}"), b"{}");
+        assert_eq!(strip_utf8_bom(b""), b"");
+    }
+
+    #[test]
+    fn settings_file_with_bom_parses() {
+        let bytes = b"\xEF\xBB\xBF{\"settings\":{\"hotkey\":\"Alt+X\"}}";
+        let value: serde_json::Value = serde_json::from_slice(strip_utf8_bom(bytes)).unwrap();
+        assert_eq!(value["settings"]["hotkey"], "Alt+X");
     }
 }

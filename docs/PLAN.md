@@ -112,7 +112,7 @@ Hotkey: use the Tauri global-shortcut plugin (RegisterHotKey-based). **Never** i
 - Bundle **Vazirmatn** (woff2, Latin+Arabic subsets only) locally; no network fonts.
 - Normalize: CRLF→LF, strip zero-width junk except ZWNJ (U+200C, needed in Persian), trim trailing spaces.
 - Normalize Arabic presentation forms (U+FB50–U+FDFF, U+FE70–U+FEFF, common in PDF text layers) to base letters via NFKC applied to those characters only; dependency `unicode-normalization` approved by the user (Phase 1 matrix finding).
-- Controls: Copy, Close (Esc), font size −/+, toggle RTL/LTR override. Remember size/position (window-state).
+- Controls: Copy, Close (Esc or the title bar; no extra toolbar button), font size −/+, toggle RTL/LTR override, Justify toggle (remembered like font size). Remember size/position (window-state).
 - Respect system light/dark theme.
 
 ---

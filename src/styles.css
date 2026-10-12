@@ -103,8 +103,10 @@ body {
   background: var(--button-hover);
 }
 
-.toolbar .close {
-  margin-inline-start: auto;
+.toolbar button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
 }
 
 .status {
@@ -126,12 +128,32 @@ body {
   overflow-wrap: anywhere;
 }
 
+.viewer.justify > p {
+  text-align: justify;
+}
+
 .viewer p.gap {
   height: 0.8em;
   margin: 0;
 }
 
-.viewer p.notice {
+/* Capture errors and hints: a calm card, not body text. */
+.viewer .notice {
+  margin: 8px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.viewer .notice h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.viewer .notice p {
+  margin: 0;
   color: var(--muted);
 }
 
@@ -183,6 +205,11 @@ body {
 .settings .message {
   color: var(--muted);
   font-size: 12px;
+}
+
+.settings .path {
+  overflow-wrap: anywhere;
+  user-select: text;
 }
 
 .settings .message.error {

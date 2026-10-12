@@ -10,7 +10,7 @@ use tauri_plugin_global_shortcut::{
 };
 
 use super::viewer::{self, ViewerContent};
-use super::{AppState, lock};
+use super::{AppState, lock, logging};
 use crate::platform;
 
 /// Overall capture budget (UIA + clipboard fallback).
@@ -30,16 +30,30 @@ pub fn handle(app: &AppHandle, _shortcut: &Shortcut, event: ShortcutEvent) {
     let spawned = std::thread::Builder::new()
         .name("rightpeek-hotkey".into())
         .spawn(move || {
-            let content = match platform::selection_provider().capture(CAPTURE_TIMEOUT) {
-                Ok(captured) => ViewerContent::from_text(&captured.text),
-                Err(error) => ViewerContent::notice(error.to_string()),
+            let result = platform::selection_provider().capture(CAPTURE_TIMEOUT);
+            let elapsed_ms = pressed_at.elapsed().as_millis();
+            // Log the outcome only, never the captured text.
+            let content = match result {
+                Ok(captured) => {
+                    logging::info(&format!(
+                        "captured {} chars via {:?} in {elapsed_ms} ms",
+                        captured.text.chars().count(),
+                        captured.method
+                    ));
+                    ViewerContent::from_text(&captured.text)
+                }
+                Err(error) => {
+                    logging::warn(&format!("capture failed after {elapsed_ms} ms: {error}"));
+                    ViewerContent::from_error(&error)
+                }
             };
             app.state::<AppState>()
                 .capturing
                 .store(false, Ordering::Release);
             viewer::show(&app, content, Some(pressed_at));
         });
-    if spawned.is_err() {
+    if let Err(error) = spawned {
+        logging::error(&format!("cannot start capture thread: {error}"));
         state.capturing.store(false, Ordering::Release);
     }
 }
@@ -54,8 +68,9 @@ pub fn register_from_settings(app: &AppHandle) {
         .register(hotkey.as_str())
         .err()
         .map(|error| format!("Cannot register {hotkey}: {error}"));
-    if let Some(message) = &error {
-        eprintln!("RightPeek: {message}");
+    match &error {
+        Some(message) => logging::warn(message),
+        None => logging::info(&format!("hotkey {hotkey} registered")),
     }
     *lock(&state.hotkey_error) = error;
 }
@@ -72,10 +87,12 @@ pub fn replace(app: &AppHandle, new_hotkey: &str) -> Result<(), String> {
     match shortcuts.register(new_hotkey) {
         Ok(()) => {
             *lock(&state.hotkey_error) = None;
+            logging::info(&format!("hotkey changed to {new_hotkey}"));
             Ok(())
         }
         Err(error) => {
             let _ = shortcuts.register(old_hotkey.as_str());
+            logging::warn(&format!("cannot register {new_hotkey}: {error}"));
             Err(format!(
                 "Cannot register {new_hotkey} (maybe another app uses it): {error}"
             ))

@@ -13,11 +13,12 @@ interface Paragraph {
 
 type ViewerContent =
   | { kind: "text"; paragraphs: Paragraph[]; plain: string }
-  | { kind: "notice"; message: string };
+  | { kind: "notice"; title: string; hint: string };
 
 interface ViewerPayload {
   content: ViewerContent;
   fontSize: number;
+  justify: boolean;
 }
 
 const FONT_STEP = 2;
@@ -33,19 +34,28 @@ const DIRECTION_LABELS: Record<DirectionMode, string> = {
 const viewer = document.querySelector<HTMLElement>("#viewer")!;
 const status = document.querySelector<HTMLElement>("#status")!;
 const directionButton = document.querySelector<HTMLButtonElement>("#direction")!;
+const justifyButton = document.querySelector<HTMLButtonElement>("#justify")!;
 
 let plainText = "";
 let fontSize = 18;
 let directionMode: DirectionMode = "auto";
+let justify = false;
 
 function render(content: ViewerContent): void {
   viewer.replaceChildren();
   if (content.kind === "notice") {
     plainText = "";
-    const notice = document.createElement("p");
+    const notice = document.createElement("section");
     notice.className = "notice";
-    notice.dir = "auto";
-    notice.textContent = content.message;
+    notice.dir = "ltr";
+    const title = document.createElement("h2");
+    title.textContent = content.title;
+    notice.append(title);
+    if (content.hint) {
+      const hint = document.createElement("p");
+      hint.textContent = content.hint;
+      notice.append(hint);
+    }
     viewer.append(notice);
     return;
   }
@@ -75,9 +85,16 @@ function applyFontSize(size: number): void {
   document.documentElement.style.setProperty("--font-size", `${size}px`);
 }
 
+function applyJustify(enabled: boolean): void {
+  justify = enabled;
+  viewer.classList.toggle("justify", enabled);
+  justifyButton.setAttribute("aria-pressed", String(enabled));
+}
+
 async function refresh(): Promise<void> {
   const payload = await invoke<ViewerPayload>("take_pending_text");
   applyFontSize(payload.fontSize);
+  applyJustify(payload.justify);
   render(payload.content);
   window.scrollTo(0, 0);
   // Two frames: the text has been laid out and painted.
@@ -108,7 +125,9 @@ async function copyAll(): Promise<void> {
 document.querySelector("#copy")!.addEventListener("click", () => void copyAll());
 document.querySelector("#smaller")!.addEventListener("click", () => void changeFontSize(-FONT_STEP));
 document.querySelector("#larger")!.addEventListener("click", () => void changeFontSize(FONT_STEP));
-document.querySelector("#close")!.addEventListener("click", () => void getCurrentWindow().close());
+justifyButton.addEventListener("click", async () => {
+  applyJustify(await invoke<boolean>("set_justify", { enabled: !justify }));
+});
 directionButton.addEventListener("click", () => {
   const next = (DIRECTION_MODES.indexOf(directionMode) + 1) % DIRECTION_MODES.length;
   directionMode = DIRECTION_MODES[next];
