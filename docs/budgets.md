@@ -39,3 +39,28 @@ With pre-warm on, the hidden viewer exists from startup and the first capture
 showed text in 63 ms (the viewer then stays alive, so idle RAM includes
 WebView2, about 90 MB; that is why it is opt-in). The installer was not
 rebuilt in this phase; Phase 2 measured 1.59 MB.
+
+### 30-minute soak
+
+`scripts/soak.ps1 -Minutes 30` on the release build, default settings (pre-warm
+off, so every round creates and destroys the viewer). Each round captures text
+from one test window, closes the viewer with Esc, then presses the hotkey over
+an empty window to get the "No text selected" notice.
+
+| Check | Result |
+|---|---|
+| Rounds (2 hotkey presses each) | 197 |
+| Viewer did not appear | 0 |
+| Panics / app died | none, still alive |
+| App private working set, start → end | 1.6 MB → 10 MB |
+
+The "Done when" criterion (no panics, budgets met) holds. Memory is not flat:
+the app process grows about 9 KB per viewer opened (6.9 MB at round 30,
+9.7 MB at round 190). Removing a window reference cycle from the close handler
+did not change the trend (an earlier run went 1.6 → 9.7 MB), so the growth
+is not that cycle. Still open: whether it comes from creating WebView2 windows
+(a soak with pre-warm on would tell) or is allocator retention that levels off.
+
+Soak harness fixes from this phase: find the viewer by its title, stop if the
+screen locks, keep both test windows open for the whole run (closing the
+active window left keyboard focus unreliable).
