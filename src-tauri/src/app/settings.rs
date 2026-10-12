@@ -75,6 +75,14 @@ pub fn open_window(app: &AppHandle) {
     }
 }
 
+/// Viewer toolbar "Settings" button. Async on purpose: creating a window inside
+/// a synchronous command deadlocks the IPC on Windows (Tauri docs, "Create
+/// windows in commands").
+#[tauri::command]
+pub async fn open_settings(app: AppHandle) {
+    open_window(&app);
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {

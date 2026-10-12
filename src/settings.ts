@@ -1,5 +1,5 @@
-﻿// Settings page: records a hotkey combination and toggles autostart,
-// pre-warm and logging.
+﻿// Settings page: records a hotkey combination and toggles autostart and
+// logging.
 // Validation and registration happen in Rust (core::settings, app::hotkey).
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -9,7 +9,6 @@ interface SettingsView {
     hotkey: string;
     autostart: boolean;
     fontSize: number;
-    prewarm: boolean;
     logging: boolean;
   };
   hotkeyError: string | null;
@@ -31,7 +30,6 @@ const hotkeyInput = document.querySelector<HTMLInputElement>("#hotkey")!;
 const hotkeyMessage = document.querySelector<HTMLElement>("#hotkey-message")!;
 const autostartBox = document.querySelector<HTMLInputElement>("#autostart")!;
 const autostartMessage = document.querySelector<HTMLElement>("#autostart-message")!;
-const prewarmBox = document.querySelector<HTMLInputElement>("#prewarm")!;
 const loggingBox = document.querySelector<HTMLInputElement>("#logging")!;
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
 
@@ -79,10 +77,6 @@ autostartBox.addEventListener("change", async () => {
   }
 });
 
-prewarmBox.addEventListener("change", async () => {
-  prewarmBox.checked = await invoke<boolean>("set_prewarm", { enabled: prewarmBox.checked });
-});
-
 loggingBox.addEventListener("change", async () => {
   loggingBox.checked = await invoke<boolean>("set_logging", { enabled: loggingBox.checked });
 });
@@ -97,7 +91,6 @@ async function load(): Promise<void> {
   const view = await invoke<SettingsView>("get_settings");
   hotkeyInput.value = view.settings.hotkey;
   autostartBox.checked = view.settings.autostart;
-  prewarmBox.checked = view.settings.prewarm;
   loggingBox.checked = view.settings.logging;
   if (view.logDir) logDir.textContent = `Folder: ${view.logDir}`;
   if (view.hotkeyError) showMessage(hotkeyMessage, view.hotkeyError, true);
