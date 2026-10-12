@@ -11,6 +11,7 @@ fn main() {
         "set_hotkey",
         "set_autostart",
         "set_logging",
+        "set_show_settings_on_start",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("failed to run tauri-build");

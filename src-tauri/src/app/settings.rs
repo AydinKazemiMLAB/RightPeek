@@ -64,7 +64,7 @@ pub fn open_window(app: &AppHandle) {
     }
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
-        .inner_size(460.0, 380.0)
+        .inner_size(460.0, 440.0)
         .resizable(false)
         .maximizable(false)
         .center()
@@ -126,6 +126,13 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
+}
+
+#[tauri::command]
+pub fn set_show_settings_on_start(app: AppHandle, enabled: bool) -> bool {
+    lock(&app.state::<AppState>().settings).show_settings_on_start = enabled;
+    save(&app);
+    enabled
 }
 
 #[tauri::command]

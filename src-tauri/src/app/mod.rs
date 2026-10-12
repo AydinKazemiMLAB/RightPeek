@@ -13,7 +13,7 @@ use std::time::Instant;
 
 use tauri::{AppHandle, Manager, RunEvent};
 
-use crate::core::settings::Settings;
+use crate::core::settings::{Settings, open_settings_on_start};
 use viewer::ViewerContent;
 
 /// State shared by commands, the hotkey handler and the tray.
@@ -45,8 +45,9 @@ pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     logging::info(&format!("RightPeek {} started", env!("CARGO_PKG_VERSION")));
     hotkey::register_from_settings(app);
     tray::create(app)?;
-    // Without a working hotkey the app is unusable: let the user pick another.
-    if lock(&state.hotkey_error).is_some() {
+    let hotkey_failed = lock(&state.hotkey_error).is_some();
+    let show = open_settings_on_start(&lock(&state.settings), hotkey_failed, std::env::args());
+    if show {
         settings::open_window(app);
     }
     Ok(())

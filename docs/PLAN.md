@@ -207,8 +207,11 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [x] Tauri bundler: NSIS installer, per-user install (no MSI). WebView2 download bootstrapper (silent, only when missing).
 - [x] Uninstall cleanup: "Start with Windows" Run entry removed (kept on update); app data removed on request.
 - [x] Installer smoke test (`scripts/installer-smoke.ps1`): silent install, launch, silent uninstall, no leftovers.
+- [x] Portable exe published next to the installer (`RightPeek_<version>_x64-portable.exe`).
+- [x] Uninstall also drops Windows' per-user usage records for the exe (AppSwitched, Compatibility Assistant); Prefetch is left to Windows (admin only).
+- [x] Setting "Open this window when RightPeek starts" (on by default) so a first run is noticed; sign-in autostart (`--autostart`) stays quiet.
 - [ ] Release workflow in CI (`release.yml`: build, smoke test on `windows-2022`/`windows-2025`, draft release on `v*` tags) — written, not yet run on GitHub.
-- [ ] Manual install/uninstall on the maintainer's PC.
+- [x] Manual install/uninstall on the maintainer's PC (2026-10-12; re-check after the latest uninstall changes).
 - [x] Viewer toolbar: Justify toggle (remembered), Settings button; the duplicate toolbar close button removed.
 - [x] Pre-warm setting removed (about 90 MB of idle RAM was too easy to opt into; cold start already meets its budget).
 - [ ] **Code signing** — deferred (2026-10-12). Plan: SignPath Foundation (needs an OSI license, a public repo and a first public release); see `docs/release.md`.
