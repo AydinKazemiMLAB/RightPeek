@@ -52,7 +52,7 @@
 │   ▲                                                             │
 │   │ trait SelectionProvider                                     │
 │ platform/   windows.rs  (UIA + clipboard fallback)              │
-│             macos.rs / linux.rs   (Phase 5)                     │
+│             linux.rs (Phase 5) / macos.rs (Phase 6)             │
 └───────────────┬─────────────────────────────────────────────────┘
                 │ invoke("take_pending_text")  (pull, no race)
 ┌───────────────▼──────────── Viewer (WebView) ──────────────────┐
@@ -217,10 +217,18 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [x] **Done when:** the installer built by CI installs/uninstalls cleanly on clean Windows runners and on the maintainer's PC (signing follows later).
 - Decisions (2026-10-12): NSIS only; no updater yet; signing deferred; "fresh VM" = CI runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
-### Phase 5 — Cross-platform
-- [ ] **macOS:** Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization.
-- [ ] **Linux X11:** read PRIMARY selection directly. **Wayland:** GlobalShortcuts portal or DE-bound shortcut running `app --show`; `wl-paste --primary` fallback.
-- [ ] `core/` must not change; only `platform/*` and bundling.
+### Phase 5 — Linux
+- [ ] `platform/linux.rs`: read the PRIMARY selection directly (no Ctrl+C, clipboard untouched) via `arboard` (X11, and Wayland compositors with data-control); `wl-paste --primary` fallback on Wayland.
+- [ ] X11: the existing global-shortcut plugin. Wayland: the user binds a desktop shortcut to `rightpeek --show` (forwarded through single-instance); no portal dependency.
+- [ ] `core/`: additive changes only (new `CaptureMethod::PrimarySelection`), test-first.
+- [ ] Packaging: `.deb` and `.rpm` (AppImage skipped: ~80 MB, over the installer budget). CI: build + test on `ubuntu-latest`.
+- [ ] Capture matrix for Linux in `docs/capture-matrix.md`; budgets in `docs/budgets.md`.
+- [ ] **Done when:** hotkey (X11) and `--show` (Wayland) show the selection on Ubuntu 24.04 under WSLg; packages install/uninstall cleanly.
+- Decisions (2026-10-13): Linux only (macOS split out to Phase 6); test on Ubuntu 24.04 WSL (WSLg); dependency `arboard` approved; Wayland via desktop shortcut, not the GlobalShortcuts portal.
+
+### Phase 6 — macOS
+- [ ] Services menu entry (true right-click on selected text in all apps) + Accessibility `AXSelectedText` for the hotkey; permission onboarding; notarization (Apple Developer account: ask first).
+- [ ] `core/` additive changes only; the rest in `platform/macos.rs` and bundling. Tested on the maintainer's Mac.
 
 ---
 
