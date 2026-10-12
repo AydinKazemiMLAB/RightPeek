@@ -167,6 +167,12 @@ pub fn clamp_font_size(size: u8) -> u8 {
     size.clamp(MIN_FONT_SIZE, MAX_FONT_SIZE)
 }
 
+/// Drops a leading UTF-8 byte order mark. Some Windows editors add one when
+/// saving, and JSON parsers reject it, which would silently reset settings.
+pub fn strip_utf8_bom(bytes: &[u8]) -> &[u8] {
+    bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,5 +281,23 @@ mod tests {
         assert_eq!(clamp_font_size(4), MIN_FONT_SIZE);
         assert_eq!(clamp_font_size(200), MAX_FONT_SIZE);
         assert_eq!(clamp_font_size(20), 20);
+    }
+
+    #[test]
+    fn utf8_bom_is_stripped() {
+        assert_eq!(strip_utf8_bom(b"\xEF\xBB\xBF{}"), b"{}");
+    }
+
+    #[test]
+    fn text_without_bom_is_unchanged() {
+        assert_eq!(strip_utf8_bom(b"{}"), b"{}");
+        assert_eq!(strip_utf8_bom(b""), b"");
+    }
+
+    #[test]
+    fn settings_file_with_bom_parses() {
+        let bytes = b"\xEF\xBB\xBF{\"settings\":{\"hotkey\":\"Alt+X\"}}";
+        let value: serde_json::Value = serde_json::from_slice(strip_utf8_bom(bytes)).unwrap();
+        assert_eq!(value["settings"]["hotkey"], "Alt+X");
     }
 }
