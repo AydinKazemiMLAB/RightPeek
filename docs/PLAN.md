@@ -208,6 +208,7 @@ Each phase ends with: tests green, `cargo clippy -D warnings` clean, budgets mea
 - **Code signing** (reduces SmartScreen/AV flags — important for an app that sends keystrokes and reads the clipboard).
 - Optional updater plugin with signing keys. Release workflow in CI.
 - **Done when:** signed installer from CI installs/uninstalls cleanly on a fresh Windows 10 and 11 VM.
+- Decisions (2026-10-12): NSIS only (no MSI); per-user install; WebView2 via the download bootstrapper; no updater yet (private repo); signing through SignPath Foundation (needs an OSI license, a public repo and a first public release); "fresh VM" = CI smoke test on `windows-2022`/`windows-2025` runners plus a manual run on the maintainer's PC (Windows 11 Home has no Hyper-V/Sandbox). Details: `docs/release.md`.
 
 ### Phase 5 — Browser right-click (Chrome/Edge)
 - MV3 extension: `contextMenus` with `contexts: ["selection"]` → native messaging → host binary (a tiny mode of the app or separate exe) → forwards text to the running instance.

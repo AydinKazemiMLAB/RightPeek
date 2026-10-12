@@ -25,6 +25,22 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "Aydin Kazemi",
+    "copyright": "Copyright (c) 2026 Aydin Kazemi",
+    "category": "Utility",
+    "shortDescription": "Show selected text right-to-left in a clean viewer",
+    "longDescription": "RightPeek is a tray app: select text in any app, press a shortcut, and read it with correct right-to-left layout.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    }
   }
 }
