@@ -6,6 +6,7 @@
 #
 # Each round: capture text from a test window, close the viewer with Esc,
 # then capture from an empty window (the "No text selected" notice).
+# Turn on logging in Settings to count captures and errors afterwards.
 param(
     [string]$Exe = "$PSScriptRoot\..\src-tauri\target\release\rightpeek.exe",
     [string[]]$Modifiers = @('Ctrl', 'Shift'),
@@ -47,18 +48,22 @@ function Get-PrivateMB([int]$Id) {
     if ($perf) { [math]::Round([double]$perf.WorkingSetPrivate / 1MB, 1) } else { $null }
 }
 
-function Start-Target([string]$Text) {
-    Start-Process powershell -PassThru -WindowStyle Normal -ArgumentList @(
+# Hidden console: activation must reach the WPF window, which has its own title.
+function Start-Target([string]$Text, [string]$Title) {
+    Start-Process powershell -PassThru -WindowStyle Hidden -ArgumentList @(
         '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', "$PSScriptRoot\test-target.ps1",
-        '-Seconds', [string]($Minutes * 60 + 120), '-Text', "`"$Text`"")
+        '-Seconds', [string]($Minutes * 60 + 120), '-Title', $Title, '-Text', "`"$Text`"")
 }
 
 if (Get-Process rightpeek -ErrorAction SilentlyContinue) { throw 'RightPeek is already running; quit it first.' }
 $app = Start-Process $Exe -PassThru
 Start-Sleep -Seconds 5
 $shell = New-Object -ComObject WScript.Shell
-$withText = Start-Target 'سلام دنیا (آزمایش ۱۲۳) و یک متن English با نیم‌فاصله: می‌خواهم.'
-Start-Sleep -Seconds 4
+# Both windows stay open for the whole run; closing the active window
+# between captures leaves Windows' keyboard focus unreliable.
+$withText = Start-Target 'سلام دنیا (آزمایش ۱۲۳) و یک متن English با نیم‌فاصله: می‌خواهم.' 'RightPeekSoakText'
+$box = Start-Target '' 'RightPeekSoakEmpty'
+Start-Sleep -Seconds 5
 $memStart = Get-PrivateMB $app.Id
 $deadline = (Get-Date).AddMinutes($Minutes)
 $rounds = 0; $failures = 0; $alive = $true
@@ -69,21 +74,19 @@ while ((Get-Date) -lt $deadline) {
     if (Get-Process LogonUI -ErrorAction SilentlyContinue) { $locked = $true; break }
     $rounds++
     foreach ($empty in $false, $true) {
-        if ($empty) { $box = Start-Target ''; Start-Sleep -Seconds 4 }
-        [void]$shell.AppActivate($(if ($empty) { $box.Id } else { $withText.Id }))
+        [void]$shell.AppActivate($(if ($empty) { 'RightPeekSoakEmpty' } else { 'RightPeekSoakText' }))
         Start-Sleep -Milliseconds 400
         Send-Keys $hotkeyMods $hotkeyVk
         Start-Sleep -Seconds $PauseSeconds
         if (-not (Test-ViewerVisible)) { $failures++ } else { Send-Keys @() 0x1B }  # Esc closes the viewer
-        if ($empty) { Stop-Process -Id $box.Id -ErrorAction SilentlyContinue }
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Seconds 1
     }
     if (-not (Get-Process -Id $app.Id -ErrorAction SilentlyContinue)) { $alive = $false; break }
     if ($rounds % 10 -eq 0) { Write-Host ("round {0}: {1} MB" -f $rounds, (Get-PrivateMB $app.Id)) }
 }
 
 $memEnd = if ($alive) { Get-PrivateMB $app.Id } else { $null }
-Stop-Process -Id $withText.Id -ErrorAction SilentlyContinue
+Stop-Process -Id $withText.Id, $box.Id -ErrorAction SilentlyContinue
 if ($alive) { Stop-Process -Id $app.Id -ErrorAction SilentlyContinue }
 [pscustomobject]@{
     'Minutes'                       = $Minutes

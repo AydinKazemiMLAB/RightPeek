@@ -2,12 +2,13 @@
 # for scripts/measure-budgets.ps1 (or -Text for repro). Closes itself after -Seconds.
 param(
     [int]$Seconds = 30,
+    [string]$Title = 'RightPeekTestTarget',
     [string]$Text = "سلام دنیا، این یک متن آزمایشی است.`r`nمی‌خواهم نیم‌فاصله حفظ شود."
 )
 
 Add-Type -AssemblyName PresentationFramework
 $window = New-Object Windows.Window
-$window.Title = 'RightPeekTestTarget'
+$window.Title = $Title
 $window.Width = 500
 $window.Height = 200
 $window.Topmost = $true
@@ -17,6 +18,9 @@ $box.FlowDirection = 'RightToLeft'
 $box.Text = $Text
 $window.Content = $box
 $window.Add_ContentRendered({ $window.Activate(); [void]$box.Focus(); $box.SelectAll() })
+# Re-select on every activation: after another window closes, WPF may not
+# give keyboard focus back to the box, and the selection would be lost.
+$window.Add_Activated({ [void]$box.Focus(); $box.SelectAll() })
 $timer = New-Object Windows.Threading.DispatcherTimer
 $timer.Interval = [TimeSpan]::FromSeconds($Seconds)
 $timer.Add_Tick({ $window.Close() })

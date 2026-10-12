@@ -116,15 +116,18 @@ fn build(app: &AppHandle) -> Option<WebviewWindow> {
             return None;
         }
     };
+    // Look the window up instead of capturing a clone: a clone inside its own
+    // event handler is a reference cycle that keeps every closed viewer alive.
     let handle = app.clone();
-    let hidden = window.clone();
     window.on_window_event(move |event| match event {
         WindowEvent::CloseRequested { api, .. } => {
             // Persist now: the plugin itself only writes on app exit.
             let _ = handle.save_window_state(WINDOW_STATE);
             if lock(&handle.state::<AppState>().settings).prewarm {
                 api.prevent_close();
-                let _ = hidden.hide();
+                if let Some(viewer) = handle.get_webview_window(LABEL) {
+                    let _ = viewer.hide();
+                }
             }
         }
         WindowEvent::Destroyed => {
