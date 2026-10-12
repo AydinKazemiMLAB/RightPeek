@@ -6,6 +6,8 @@ pub const DEFAULT_HOTKEY: &str = "Ctrl+Shift+Space";
 pub const DEFAULT_FONT_SIZE: u8 = 18;
 pub const MIN_FONT_SIZE: u8 = 12;
 pub const MAX_FONT_SIZE: u8 = 40;
+/// Passed by the "Start with Windows" entry so sign-in launches stay quiet.
+pub const AUTOSTART_ARG: &str = "--autostart";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -17,6 +19,8 @@ pub struct Settings {
     pub logging: bool,
     /// Justify viewer paragraphs (both edges aligned) instead of ragged.
     pub justify: bool,
+    /// Open Settings when launched by hand, so a first run is noticed.
+    pub show_settings_on_start: bool,
 }
 
 impl Default for Settings {
@@ -27,6 +31,7 @@ impl Default for Settings {
             font_size: DEFAULT_FONT_SIZE,
             logging: cfg!(debug_assertions),
             justify: false,
+            show_settings_on_start: true,
         }
     }
 }
@@ -167,6 +172,17 @@ pub fn clamp_font_size(size: u8) -> u8 {
     size.clamp(MIN_FONT_SIZE, MAX_FONT_SIZE)
 }
 
+/// Whether Settings opens at start-up: always when the hotkey failed (the app
+/// is unusable without it), otherwise when the option is on and the launch
+/// was not the sign-in autostart.
+pub fn open_settings_on_start<I>(settings: &Settings, hotkey_failed: bool, args: I) -> bool
+where
+    I: IntoIterator<Item = String>,
+{
+    hotkey_failed
+        || (settings.show_settings_on_start && !args.into_iter().any(|arg| arg == AUTOSTART_ARG))
+}
+
 /// Drops a leading UTF-8 byte order mark. Some Windows editors add one when
 /// saving, and JSON parsers reject it, which would silently reset settings.
 pub fn strip_utf8_bom(bytes: &[u8]) -> &[u8] {
@@ -184,6 +200,10 @@ mod tests {
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
         assert!(!settings.justify, "ragged edges are the default");
+        assert!(
+            settings.show_settings_on_start,
+            "a first launch must show that the app is running"
+        );
     }
 
     #[test]
@@ -207,10 +227,12 @@ mod tests {
             font_size: 22,
             logging: true,
             justify: true,
+            show_settings_on_start: false,
         };
         let json = serde_json::to_value(&settings).unwrap();
         assert_eq!(json["fontSize"], 22);
         assert_eq!(json["justify"], true);
+        assert_eq!(json["showSettingsOnStart"], false);
         assert_eq!(serde_json::from_value::<Settings>(json).unwrap(), settings);
     }
 
@@ -282,6 +304,50 @@ mod tests {
         assert_eq!(clamp_font_size(4), MIN_FONT_SIZE);
         assert_eq!(clamp_font_size(200), MAX_FONT_SIZE);
         assert_eq!(clamp_font_size(20), 20);
+    }
+
+    fn args(list: &[&str]) -> Vec<String> {
+        list.iter().map(|arg| (*arg).to_owned()).collect()
+    }
+
+    #[test]
+    fn manual_launch_opens_settings_by_default() {
+        let settings = Settings::default();
+        assert!(open_settings_on_start(
+            &settings,
+            false,
+            args(&["rightpeek.exe"])
+        ));
+    }
+
+    #[test]
+    fn launch_at_sign_in_stays_in_the_tray() {
+        let settings = Settings::default();
+        let launch = args(&["rightpeek.exe", AUTOSTART_ARG]);
+        assert!(!open_settings_on_start(&settings, false, launch));
+    }
+
+    #[test]
+    fn turning_the_option_off_starts_quietly() {
+        let settings = Settings {
+            show_settings_on_start: false,
+            ..Settings::default()
+        };
+        assert!(!open_settings_on_start(
+            &settings,
+            false,
+            args(&["rightpeek.exe"])
+        ));
+    }
+
+    #[test]
+    fn a_failed_hotkey_always_opens_settings() {
+        let settings = Settings {
+            show_settings_on_start: false,
+            ..Settings::default()
+        };
+        let launch = args(&["rightpeek.exe", AUTOSTART_ARG]);
+        assert!(open_settings_on_start(&settings, true, launch));
     }
 
     #[test]

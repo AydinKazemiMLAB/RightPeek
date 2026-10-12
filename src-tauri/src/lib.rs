@@ -19,7 +19,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
+            Some(vec![core::settings::AUTOSTART_ARG]),
         ))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -44,6 +44,7 @@ pub fn run() {
             app::settings::set_hotkey,
             app::settings::set_autostart,
             app::settings::set_logging,
+            app::settings::set_show_settings_on_start,
         ])
         .setup(|app| app::setup(app.handle()))
         .build(tauri::generate_context!())
