@@ -7,7 +7,7 @@ pub mod platform;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         // Must be first: a second launch is forwarded here and exits.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             use core::settings::{SecondLaunch, second_launch};
@@ -22,10 +22,6 @@ pub fn run() {
                 .default_deserialize_fn(app::settings::deserialize_store)
                 .build(),
         )
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec![core::settings::AUTOSTART_ARG]),
-        ))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(app::hotkey::handle)
@@ -37,7 +33,14 @@ pub fn run() {
                 .with_state_flags(app::viewer::WINDOW_STATE)
                 .with_denylist(&[app::settings::LABEL])
                 .build(),
-        )
+        );
+    // Windows writes its sign-in entry itself (app::autostart).
+    #[cfg(not(windows))]
+    let builder = builder.plugin(tauri_plugin_autostart::init(
+        tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+        Some(vec![core::settings::AUTOSTART_ARG]),
+    ));
+    builder
         .manage(app::AppState::default())
         .invoke_handler(tauri::generate_handler![
             app::viewer::take_pending_text,

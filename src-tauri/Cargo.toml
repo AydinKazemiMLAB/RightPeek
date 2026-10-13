@@ -30,7 +30,6 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-single-instance = "2"
-tauri-plugin-autostart = "2"
 tauri-plugin-store = "2"
 # Command payloads and the settings model (approved by the user, Phase 2).
 serde = { version = "1", features = ["derive"] }
@@ -39,8 +38,14 @@ serde_json = "1"
 unicode-normalization = "0.1"
 tauri-plugin-window-state = "2"
 
+# Sign-in entry: the plugin elsewhere; on Windows auto-launch (the plugin's own
+# backend) directly, to force a per-user entry (approved by the user).
+[target.'cfg(not(windows))'.dependencies]
+tauri-plugin-autostart = "2"
+
 # Selection capture: UI Automation, clipboard, SendInput (PLAN.md §4).
 [target.'cfg(windows)'.dependencies]
+auto-launch = "0.6"
 windows = { version = "0.62", features = [
   "Win32_Foundation",
   "Win32_Security",
