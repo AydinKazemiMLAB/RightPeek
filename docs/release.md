@@ -53,14 +53,15 @@ autostart entry are gone. CI runs it under `dbus-run-session` on
 
 1. Bump `version` in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and
    `package.json`; merge to `main`.
-2. Tag `vX.Y.Z` on `main` and push the tag (ask the maintainer first: it is
-   irreversible).
-3. `.github/workflows/release.yml` builds, smoke-tests and creates a **draft**
-   release with the installer, the portable exe and the Linux packages. Review
-   it and publish by hand.
+2. Run the Release workflow (push a `vX.Y.Z` tag, or start it by hand from
+   the Actions tab). It builds and smoke-tests the installer, the portable exe
+   and the Linux packages and keeps them as the run's artifacts
+   (`installer`, `linux-packages`). It creates no GitHub release.
+3. The maintainer creates the GitHub release by hand and attaches the files.
 
-No auto-updater for now (decided in Phase 4): the repository is private, so
-clients could not download updates from its releases.
+No auto-updater for now: deferred in Phase 4 while the repository was
+private, and set aside again by the maintainer on 2026-10-14 after it went
+public. Users update by installing the new release over the old one.
 
 ## Code signing (deferred)
 
