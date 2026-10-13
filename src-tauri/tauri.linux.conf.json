@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "targets": [
+      "deb",
+      "rpm"
+    ],
+    "linux": {
+      "deb": {
+        "recommends": [
+          "wl-clipboard"
+        ],
+        "postRemoveScript": "./linux/postrm-deb.sh"
+      },
+      "rpm": {
+        "recommends": [
+          "wl-clipboard"
+        ],
+        "postRemoveScript": "./linux/postun-rpm.sh"
+      }
+    }
+  }
+}
