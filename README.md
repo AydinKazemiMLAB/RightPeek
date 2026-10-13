@@ -5,11 +5,6 @@
 Select text in any app, press a shortcut, and read it with correct
 right-to-left layout.
 
-RightPeek is a tiny tray app for Windows and Linux. Persian, Arabic and Hebrew
-text that other apps show scrambled, especially when it is mixed with English
-words, numbers and parentheses, opens in a clean viewer laid out the way it
-should be.
-
 ## Features
 
 - **One shortcut, any app.** Select text and press **Ctrl+Shift+Space**
@@ -28,6 +23,16 @@ should be.
   only when needed. The installer is under 2 MB.
 - **Private.** No network access, no telemetry. Captured text is never written
   to disk or logs.
+
+## Example
+
+```
+RightPeek یک برنامه‌ی کوچک برای ویندوز و لینوکس است که در کنار ساعت (System Tray) می‌نشیند. متن فارسی، عربی یا عبری‌ای که برنامه‌های دیگر به‌هم‌ریخته نشانش می‌دهند (مخصوصاً وقتی با کلمه‌های انگلیسی، عدد و پرانتز قاطی است) در یک پنجره‌ی ساده و تمیز، همان‌طور که باید، نمایش داده می‌شود.
+```
+
+<p align="center">
+  <img src="./docs/images/after.png" width="500"/>
+</p>
 
 ## Download
 
