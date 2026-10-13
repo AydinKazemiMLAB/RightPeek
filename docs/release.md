@@ -20,6 +20,19 @@
 - Portable build: the release exe itself, published as
   `RightPeek_<version>_x64-portable.exe` (needs WebView2 already installed).
 
+## Linux packages
+
+- `src-tauri/tauri.linux.conf.json` overrides the bundle targets on Linux:
+  `.deb` and `.rpm` (package name `right-peek`, binary `/usr/bin/rightpeek`).
+  No AppImage: it bundles its libraries (~80 MB, over the 8 MB budget).
+- Built on `ubuntu-22.04` so the packages run on that glibc and newer.
+  Dependencies (WebKitGTK 4.1, GTK 3, Ayatana AppIndicator) are detected by
+  the bundler; `wl-clipboard` is recommended (Wayland primary-selection fallback).
+- `src-tauri/linux/postrm-deb.sh` / `postun-rpm.sh` delete, on removal (not on
+  upgrade), the per-user `~/.config/autostart/RightPeek.desktop` entries that
+  point at `/usr/bin/rightpeek`. Settings and logs in
+  `~/.local/share/com.rightpeek.app` are kept (Linux convention).
+
 ## Smoke test
 
 `scripts/installer-smoke.ps1` installs silently, launches the app, uninstalls
@@ -30,6 +43,12 @@ the portable exe starts. CI runs it on `windows-2022` and
 and for pull requests that touch packaging. Run it locally after
 `npm run tauri build` with RightPeek closed.
 
+`scripts/linux-smoke.sh` installs the `.deb`, starts RightPeek on Xvfb,
+captures a PRIMARY selection through `rightpeek --show` (checked in the log),
+removes the package and checks that the binary, the desktop file and the
+autostart entry are gone. CI runs it under `dbus-run-session` on
+`ubuntu-22.04` and `ubuntu-24.04`.
+
 ## Cutting a release
 
 1. Bump `version` in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and
@@ -37,7 +56,8 @@ and for pull requests that touch packaging. Run it locally after
 2. Tag `vX.Y.Z` on `main` and push the tag (ask the maintainer first: it is
    irreversible).
 3. `.github/workflows/release.yml` builds, smoke-tests and creates a **draft**
-   release with the installer and the portable exe. Review it and publish by hand.
+   release with the installer, the portable exe and the Linux packages. Review
+   it and publish by hand.
 
 No auto-updater for now (decided in Phase 4): the repository is private, so
 clients could not download updates from its releases.

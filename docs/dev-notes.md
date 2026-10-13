@@ -23,3 +23,24 @@ looks like one of them.
   `icons/ios`; delete them.
 - Clean CI profiles may lack registry keys (e.g. `HKCU\...\CurrentVersion\Run`);
   create keys before writing values in scripts.
+
+## Linux / WSL
+
+- Linux is built and tested in Ubuntu 24.04 on WSL2 (WSLg). Build in a
+  Linux-native copy (`rsync` the checkout to `~/rightpeek`, `npm ci` there):
+  Windows `node_modules` holds Windows-only binaries.
+- WSL behind the Windows proxy: set `networkingMode=mirrored` and
+  `autoProxy=true` in `%USERPROFILE%\.wslconfig`, then `wsl --shutdown`.
+- WSLg's compositor (Weston) has no primary selection: Wayland-native
+  selections cannot be tested there. X11 apps (or GTK apps with
+  `GDK_BACKEND=x11`) work; `xclip -selection primary` sets a test selection.
+- With systemd on, WSLg's Wayland socket may be missing from
+  `$XDG_RUNTIME_DIR`; link `/mnt/wslg/runtime-dir/wayland-0` there.
+- `xdg-desktop-portal(-gtk)` cannot start without a desktop session; GTK then
+  waits the 25 s DBus timeout at every launch (the single-instance name is
+  taken late, so `--show` looks hung). Remove those packages in WSL.
+- GTK ignores `resize()` on non-resizable windows and sizes them to the
+  webview's natural height (the whole screen); on Linux the settings window is
+  resizable with its width pinned by min/max size.
+- The single-instance plugin uses the DBus session bus; headless runs need
+  `dbus-run-session`.
