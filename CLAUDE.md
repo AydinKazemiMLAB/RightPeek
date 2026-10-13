@@ -6,6 +6,7 @@ relevant section before working; do not re-plan what it already decides.
 ## Language
 - Chat with the user: **Persian (Farsi)**.
 - Everything in the repo (code, identifiers, comments, commits, docs, skills): **English**.
+  Exception: `README.fa.md`, the Persian user README (kept in sync with `README.md`).
 
 ## Layout
 - `docs/` — project docs (`PLAN.md`, `capture-matrix.md`, ...). New docs go here.
