@@ -43,6 +43,7 @@ if (Get-Process rightpeek -ErrorAction SilentlyContinue) { throw "Quit RightPeek
 $p = Start-Process $Installer -ArgumentList '/S' -Wait -PassThru
 Check ($p.ExitCode -eq 0) "installer exit code 0 (got $($p.ExitCode))"
 Check (Test-Path $exe) "exe installed to $installDir"
+Check (-not (Test-Path "$installDir\capture-probe.exe")) 'dev-only capture probe not installed'
 Check (Test-Path $uninstallKey) 'listed in Installed apps'
 Check (Test-Path $shortcut) 'Start menu shortcut'
 
