@@ -4,6 +4,9 @@
 # package, and check that nothing is left behind (binary, desktop file,
 # "Start at sign-in" entry). Needs root (sudo) and the packages xvfb, xclip.
 #
+# The single-instance plugin needs a session bus; on CI run it under
+# `dbus-run-session`.
+#
 # Usage: scripts/linux-smoke.sh path/to/RightPeek_<version>_amd64.deb
 set -euo pipefail
 
@@ -22,7 +25,7 @@ command -v rightpeek >/dev/null || fail "rightpeek not on PATH after install"
 echo "== start on a virtual display"
 Xvfb :99 -screen 0 1280x800x24 >/dev/null 2>&1 &
 xvfb=$!
-trap 'kill $xvfb 2>/dev/null || true; pkill -x rightpeek || true' EXIT
+trap 'pkill -x rightpeek || true; pkill -x xclip || true; kill $xvfb 2>/dev/null || true' EXIT
 export DISPLAY=:99
 unset WAYLAND_DISPLAY
 sleep 2
