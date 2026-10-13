@@ -182,7 +182,7 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 
 ### Phase 1 — Capture spike (riskiest part first) ✅
 - [x] Implement `platform/windows.rs`: UIA path + clipboard fallback exactly per §4.
-- [x] Small dev-only CLI (`cargo run --bin capture-probe`) that waits 3 s, captures, and prints method + text.
+- [x] Small dev-only CLI (`cargo run --bin capture-probe --features probe`) that waits 3 s, captures, and prints method + text.
 - [x] Test matrix (record results in `docs/capture-matrix.md`): Chrome, Edge, Firefox, Word, Notepad, VS Code, Windows Terminal, Telegram Desktop, a PDF reader, Outlook, File Explorer rename box.
 - [x] **Done when:** ≥ 9/11 apps return correct text; clipboard verifiably restored; nothing appears in Win+V history.
 

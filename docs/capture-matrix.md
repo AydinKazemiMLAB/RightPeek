@@ -9,7 +9,7 @@ and nothing appears in Win+V history.
 Build once from the repo root:
 
 ```bash
-cargo build --manifest-path src-tauri/Cargo.toml --bin capture-probe
+cargo build --manifest-path src-tauri/Cargo.toml --bin capture-probe --features probe
 ```
 
 Per app:

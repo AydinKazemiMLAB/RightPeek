@@ -82,7 +82,7 @@ could not be snapshotted are simply lost (document in the matrix).
   clipboard with a message-only window as owner (`MessageWindow` in windows.rs).
 
 ## Validation
-`cargo run --manifest-path src-tauri/Cargo.toml --bin capture-probe -- [--uia | --clipboard] [delay_secs]`
+`cargo run --manifest-path src-tauri/Cargo.toml --bin capture-probe --features probe -- [--uia | --clipboard] [delay_secs]`
 (default delay 3 s; prints method, text, elapsed, whether the clipboard text
 survived). `--uia` shows why UIA fails; `--clipboard` forces the fallback.
 Record each app in `docs/capture-matrix.md` (how-to steps are in that file).
