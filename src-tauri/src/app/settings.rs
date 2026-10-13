@@ -5,10 +5,9 @@ use std::error::Error;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_store::StoreExt as _;
 
-use super::{AppState, hotkey, lock, logging, tray};
+use super::{AppState, autostart, hotkey, lock, logging, tray};
 use crate::core::settings::{SHOW_ARG, Settings, normalize_hotkey, strip_utf8_bom};
 use crate::platform;
 
@@ -36,9 +35,14 @@ pub fn load(app: &AppHandle) {
         .unwrap_or_default();
     settings.hotkey =
         normalize_hotkey(&settings.hotkey).unwrap_or_else(|_| Settings::default().hotkey);
-    // The registry is the source of truth for autostart.
-    if let Ok(enabled) = app.autolaunch().is_enabled() {
+    // The OS entry is the source of truth for autostart. Rewriting it moves
+    // an all-users entry left by 0.1.0 to the current user and keeps the
+    // path current.
+    if let Ok(enabled) = autostart::is_enabled(app) {
         settings.autostart = enabled;
+        if enabled && let Err(error) = autostart::set(app, true) {
+            logging::error(&format!("cannot refresh autostart: {error}"));
+        }
     }
     *lock(&app.state::<AppState>().settings) = settings;
 }
@@ -137,13 +141,7 @@ pub fn set_hotkey(app: AppHandle, hotkey: String) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
-    let launcher = app.autolaunch();
-    let result = if enabled {
-        launcher.enable()
-    } else {
-        launcher.disable()
-    };
-    result.map_err(|e| e.to_string())?;
+    autostart::set(&app, enabled)?;
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
