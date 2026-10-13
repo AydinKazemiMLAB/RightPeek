@@ -14,6 +14,15 @@ default-run = "rightpeek"
 name = "rightpeek_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# The Tauri bundler ships every binary target, so the probe is only built on
+# request: `--features probe`.
+[[bin]]
+name = "capture-probe"
+required-features = ["probe"]
+
+[features]
+probe = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
