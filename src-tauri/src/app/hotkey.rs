@@ -18,9 +18,14 @@ const CAPTURE_TIMEOUT: Duration = Duration::from_millis(1500);
 
 /// Plugin handler for every registered shortcut (we register exactly one).
 pub fn handle(app: &AppHandle, _shortcut: &Shortcut, event: ShortcutEvent) {
-    if event.state != ShortcutState::Pressed {
-        return;
+    if event.state == ShortcutState::Pressed {
+        capture_and_show(app);
     }
+}
+
+/// Captures the selection on a worker thread and shows it in the viewer.
+/// Shared by the hotkey and `--show` launches.
+pub fn capture_and_show(app: &AppHandle) {
     let pressed_at = Instant::now();
     let state = app.state::<AppState>();
     if state.capturing.swap(true, Ordering::AcqRel) {
