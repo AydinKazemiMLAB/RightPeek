@@ -9,6 +9,8 @@ pub enum CaptureMethod {
     Uia,
     /// Obtained by simulating a copy and reading the clipboard.
     Clipboard,
+    /// Read from the X11/Wayland PRIMARY selection (no copy simulated).
+    PrimarySelection,
 }
 
 /// Text captured from the foreground application.
@@ -235,5 +237,14 @@ mod tests {
         let captured = provider.capture(Duration::from_millis(10)).unwrap();
         assert_eq!(captured.text, "سلام");
         assert_eq!(captured.method, CaptureMethod::Uia);
+    }
+
+    #[test]
+    fn primary_selection_is_its_own_method() {
+        assert_ne!(CaptureMethod::PrimarySelection, CaptureMethod::Clipboard);
+        assert_eq!(
+            format!("{:?}", CaptureMethod::PrimarySelection),
+            "PrimarySelection"
+        );
     }
 }

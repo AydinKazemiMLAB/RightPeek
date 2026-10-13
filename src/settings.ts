@@ -14,6 +14,8 @@ interface SettingsView {
   };
   hotkeyError: string | null;
   logDir: string | null;
+  /** Set when global hotkeys are limited (Wayland): command for a desktop shortcut. */
+  showCommand: string | null;
 }
 
 const MODIFIER_CODES = new Set([
@@ -34,6 +36,8 @@ const autostartMessage = document.querySelector<HTMLElement>("#autostart-message
 const loggingBox = document.querySelector<HTMLInputElement>("#logging")!;
 const showOnStartBox = document.querySelector<HTMLInputElement>("#show-on-start")!;
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
+const showCommand = document.querySelector<HTMLElement>("#show-command")!;
+const showCommandLine = document.querySelector<HTMLElement>("#show-command-line")!;
 
 function showMessage(element: HTMLElement, text: string, isError: boolean): void {
   element.textContent = text;
@@ -114,6 +118,10 @@ async function load(): Promise<void> {
   showOnStartBox.checked = view.settings.showSettingsOnStart;
   if (view.logDir) logDir.textContent = `Folder: ${view.logDir}`;
   if (view.hotkeyError) showMessage(hotkeyMessage, view.hotkeyError, true);
+  if (view.showCommand) {
+    showCommandLine.textContent = view.showCommand;
+    showCommand.hidden = false;
+  }
 }
 
 async function start(): Promise<void> {

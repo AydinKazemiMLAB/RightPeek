@@ -9,8 +9,12 @@ pub mod platform;
 pub fn run() {
     tauri::Builder::default()
         // Must be first: a second launch is forwarded here and exits.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            app::settings::open_window(app);
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if core::settings::wants_capture(args) {
+                app::hotkey::capture_and_show(app);
+            } else {
+                app::settings::open_window(app);
+            }
         }))
         .plugin(
             tauri_plugin_store::Builder::new()
