@@ -2,7 +2,6 @@
 //! Follows docs/PLAN.md §4 and the `windows-text-capture` skill.
 
 use std::ffi::c_void;
-use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -40,6 +39,7 @@ use ::windows::Win32::UI::WindowsAndMessaging::{
 };
 use ::windows::core::{Error as WinError, PCWSTR, w};
 
+use super::run_with_timeout;
 use crate::core::capture::{
     CaptureError, CaptureMethod, Captured, SelectionProvider, selection_text,
 };
@@ -97,26 +97,6 @@ pub fn clipboard_text() -> Option<String> {
     let window = MessageWindow::create().ok()?;
     let _open = ClipboardLock::open(window.0).ok()?;
     read_unicode_text()
-}
-
-/// Runs `job` on a fresh thread and gives up after `timeout`. A job that
-/// overruns keeps running detached; its COM objects never leave its thread.
-fn run_with_timeout<T, F>(timeout: Duration, job: F) -> Result<T, CaptureError>
-where
-    T: Send + 'static,
-    F: FnOnce() -> Result<T, CaptureError> + Send + 'static,
-{
-    let (sender, receiver) = mpsc::sync_channel(1);
-    thread::Builder::new()
-        .name("rightpeek-capture".into())
-        .spawn(move || {
-            // The receiver may be gone after a timeout; nothing to do then.
-            let _ = sender.send(job());
-        })
-        .map_err(|e| CaptureError::Platform(format!("cannot start capture thread: {e}")))?;
-    receiver
-        .recv_timeout(timeout)
-        .map_err(|_| CaptureError::Timeout)?
 }
 
 fn os_error(error: WinError) -> CaptureError {
@@ -636,20 +616,5 @@ mod tests {
         ] {
             assert!(!should_snapshot(format), "format {format:#x}");
         }
-    }
-
-    #[test]
-    fn timeout_returns_timeout_error() {
-        let result: Result<(), _> = run_with_timeout(Duration::from_millis(10), || {
-            thread::sleep(Duration::from_millis(200));
-            Ok(())
-        });
-        assert_eq!(result, Err(CaptureError::Timeout));
-    }
-
-    #[test]
-    fn finished_job_returns_its_result() {
-        let result = run_with_timeout(Duration::from_secs(1), || Ok(7));
-        assert_eq!(result, Ok(7));
     }
 }

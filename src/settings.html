@@ -17,15 +17,20 @@
           <button id="save-hotkey" type="button">Save</button>
         </div>
         <span class="hint">Click the box and press the new combination, e.g. Ctrl+Shift+Space.</span>
+        <span id="show-command" class="hint" hidden>
+          On Wayland this shortcut only works while an X11 app is focused. For every app, add
+          a keyboard shortcut in your desktop settings that runs:
+          <code id="show-command-line" class="path"></code>
+        </span>
         <span id="hotkey-message" class="message" role="status"></span>
       </div>
       <div class="field">
-        <label><input id="autostart" type="checkbox" /> Start RightPeek when Windows starts</label>
+        <label><input id="autostart" type="checkbox" /> Start RightPeek when you sign in</label>
         <span id="autostart-message" class="message" role="status"></span>
       </div>
       <div class="field">
         <label><input id="show-on-start" type="checkbox" /> Open this window when RightPeek starts</label>
-        <span class="hint">Turn off to start quietly in the tray. Starting with Windows is always quiet.</span>
+        <span class="hint">Turn off to start quietly in the tray. Starting at sign-in is always quiet.</span>
       </div>
       <div class="field">
         <label><input id="logging" type="checkbox" /> Write a log file for troubleshooting</label>

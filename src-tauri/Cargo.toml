@@ -45,6 +45,10 @@ windows = { version = "0.62", features = [
   "Win32_UI_WindowsAndMessaging",
 ] }
 
+# Selection capture: the PRIMARY selection on X11/Wayland (approved by the user, Phase 5).
+[target.'cfg(target_os = "linux")'.dependencies]
+arboard = { version = "3.6", default-features = false, features = ["wayland-data-control"] }
+
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
 codegen-units = 1
