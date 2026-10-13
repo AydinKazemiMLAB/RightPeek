@@ -85,3 +85,23 @@ active window left keyboard focus unreliable).
 Runtime budgets were not re-measured: Phase 4 only removed the pre-warm path
 and added toolbar/settings controls; capture and rendering are unchanged
 since the Phase 3 numbers above.
+
+## Phase 5 — Linux (2026-10-13)
+
+Measured on Ubuntu 24.04 in WSL2/WSLg (software rendering through Mesa, no
+desktop session), release `.deb`. Memory is `Private_Clean + Private_Dirty`
+from `/proc/<pid>/smaps_rollup` (closest to Windows' private working set).
+WSLg is not representative for memory; re-measure on a real Linux desktop.
+
+| Metric | Budget | Result |
+|---|---|---|
+| `.deb` / `.rpm` package | ≤ 8 MB | 3.22 MB each ✅ (installed size 7.8 MB) |
+| Idle RAM, no window (app process) | ≤ 20 MB | 29–32 MB ❌ (GTK + WebKitGTK libraries) |
+| RAM with viewer open (app + WebKit processes) | ≤ 120 MB | ~285 MB ❌ (app ~78 MB, WebKitWebProcess + NetworkProcess ~205 MB) |
+| Capture time (hotkey / `--show` → text read) | — | 2–5 ms |
+| Start-up to tray-ready | — | ~1 s |
+| CPU while idle | ~0% | 0.1% ✅ |
+
+WebKitGTK runs the page in separate processes like WebView2; on WSLg they also
+carry the software GL stack. The memory misses are open: decide Linux budgets
+after measuring on a real desktop.
