@@ -1,9 +1,9 @@
 name: Release
 
 # Builds the NSIS installer and the portable exe (Windows) and the .deb/.rpm
-# packages (Linux), smoke-tests them on clean runners, and (for a v* tag)
-# attaches them to a draft GitHub release that a person reviews and
-# publishes. Unsigned for now (docs/release.md).
+# packages (Linux) and smoke-tests them on clean runners. The files are the
+# run's artifacts; the maintainer creates GitHub releases by hand. Unsigned
+# for now (docs/release.md).
 on:
   push:
     tags: ["v*"]
@@ -151,27 +151,3 @@ jobs:
 
       - name: Install, capture, remove
         run: dbus-run-session -- bash scripts/linux-smoke.sh "$(find packages -name '*.deb' | head -1)"
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [smoke, smoke-linux]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: installer
-          path: installer
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux-packages
-          path: packages
-
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" installer/*.exe $(find packages -name '*.deb' -o -name '*.rpm') \
-            --repo "$GITHUB_REPOSITORY" --draft --generate-notes --title "RightPeek $GITHUB_REF_NAME"
