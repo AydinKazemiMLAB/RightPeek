@@ -1,6 +1,6 @@
 [package]
 name = "rightpeek"
-version = "0.1.0"
+version = "0.1.1"
 description = "Tray app that shows the current text selection in a right-to-left viewer"
 authors = ["Aydin Kazemi"]
 edition = "2024"
