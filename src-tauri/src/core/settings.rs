@@ -199,6 +199,31 @@ where
     args.into_iter().any(|arg| arg == SHOW_ARG)
 }
 
+/// What the running instance does when a second launch is forwarded to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SecondLaunch {
+    /// `--show`: capture the selection and open the viewer.
+    Capture,
+    /// A manual launch: bring Settings up to show the app is running.
+    OpenSettings,
+    /// A sign-in launch (`--autostart`): stay quiet.
+    Nothing,
+}
+
+pub fn second_launch<I>(args: I) -> SecondLaunch
+where
+    I: IntoIterator<Item = String>,
+{
+    let args: Vec<String> = args.into_iter().collect();
+    if args.iter().any(|arg| arg == SHOW_ARG) {
+        SecondLaunch::Capture
+    } else if args.iter().any(|arg| arg == AUTOSTART_ARG) {
+        SecondLaunch::Nothing
+    } else {
+        SecondLaunch::OpenSettings
+    }
+}
+
 /// Drops a leading UTF-8 byte order mark. Some Windows editors add one when
 /// saving, and JSON parsers reject it, which would silently reset settings.
 pub fn strip_utf8_bom(bytes: &[u8]) -> &[u8] {
@@ -383,6 +408,26 @@ mod tests {
     fn plain_and_autostart_launches_do_not_capture() {
         assert!(!wants_capture(args(&["rightpeek"])));
         assert!(!wants_capture(args(&["rightpeek", AUTOSTART_ARG])));
+    }
+
+    #[test]
+    fn second_show_launch_captures() {
+        let launch = args(&["rightpeek", SHOW_ARG]);
+        assert_eq!(second_launch(launch), SecondLaunch::Capture);
+    }
+
+    #[test]
+    fn second_plain_launch_opens_settings() {
+        // Starting the app again from the Start menu shows that it runs.
+        let launch = args(&["rightpeek.exe"]);
+        assert_eq!(second_launch(launch), SecondLaunch::OpenSettings);
+    }
+
+    #[test]
+    fn second_sign_in_launch_stays_quiet() {
+        // A duplicate startup entry must not pop Settings at sign-in.
+        let launch = args(&["rightpeek.exe", AUTOSTART_ARG]);
+        assert_eq!(second_launch(launch), SecondLaunch::Nothing);
     }
 
     #[test]
