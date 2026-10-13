@@ -8,6 +8,9 @@ pub const MIN_FONT_SIZE: u8 = 12;
 pub const MAX_FONT_SIZE: u8 = 40;
 /// Passed by the "Start with Windows" entry so sign-in launches stay quiet.
 pub const AUTOSTART_ARG: &str = "--autostart";
+/// Captures the selection and opens the viewer, like the hotkey. For desktops
+/// without global hotkeys (Wayland): bind a desktop shortcut to `rightpeek --show`.
+pub const SHOW_ARG: &str = "--show";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -172,15 +175,28 @@ pub fn clamp_font_size(size: u8) -> u8 {
     size.clamp(MIN_FONT_SIZE, MAX_FONT_SIZE)
 }
 
-/// Whether Settings opens at start-up: always when the hotkey failed (the app
-/// is unusable without it), otherwise when the option is on and the launch
-/// was not the sign-in autostart.
+/// Whether Settings opens at start-up. Never for a `--show` launch (it opens
+/// the viewer instead). Otherwise always when the hotkey failed (the app is
+/// unusable without it), or when the option is on and the launch was not the
+/// sign-in autostart.
 pub fn open_settings_on_start<I>(settings: &Settings, hotkey_failed: bool, args: I) -> bool
 where
     I: IntoIterator<Item = String>,
 {
+    let args: Vec<String> = args.into_iter().collect();
+    if args.iter().any(|arg| arg == SHOW_ARG) {
+        return false;
+    }
     hotkey_failed
-        || (settings.show_settings_on_start && !args.into_iter().any(|arg| arg == AUTOSTART_ARG))
+        || (settings.show_settings_on_start && !args.iter().any(|arg| arg == AUTOSTART_ARG))
+}
+
+/// Whether a launch (first or forwarded second one) asks for a capture.
+pub fn wants_capture<I>(args: I) -> bool
+where
+    I: IntoIterator<Item = String>,
+{
+    args.into_iter().any(|arg| arg == SHOW_ARG)
 }
 
 /// Drops a leading UTF-8 byte order mark. Some Windows editors add one when
@@ -348,6 +364,25 @@ mod tests {
         };
         let launch = args(&["rightpeek.exe", AUTOSTART_ARG]);
         assert!(open_settings_on_start(&settings, true, launch));
+    }
+
+    #[test]
+    fn show_launch_opens_the_viewer_not_settings() {
+        // A desktop shortcut runs `rightpeek --show` (Wayland has no global
+        // hotkey), so a hotkey failure must not pop Settings every time.
+        let launch = args(&["rightpeek", SHOW_ARG]);
+        assert!(!open_settings_on_start(&Settings::default(), true, launch));
+    }
+
+    #[test]
+    fn show_argument_requests_a_capture() {
+        assert!(wants_capture(args(&["rightpeek", SHOW_ARG])));
+    }
+
+    #[test]
+    fn plain_and_autostart_launches_do_not_capture() {
+        assert!(!wants_capture(args(&["rightpeek"])));
+        assert!(!wants_capture(args(&["rightpeek", AUTOSTART_ARG])));
     }
 
     #[test]
