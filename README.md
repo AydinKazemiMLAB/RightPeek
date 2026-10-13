@@ -1,4 +1,4 @@
-# RightPeek
+![RightPeek: read right-to-left text the way it should look](docs/images/banner.png)
 
 **English** · [فارسی](README.fa.md)
 
@@ -9,8 +9,6 @@ RightPeek is a tiny tray app for Windows and Linux. Persian, Arabic and Hebrew
 text that other apps show scrambled, especially when it is mixed with English
 words, numbers and parentheses, opens in a clean viewer laid out the way it
 should be.
-
-![RightPeek viewer showing Persian text mixed with English](docs/images/viewer.png)
 
 ## Features
 
