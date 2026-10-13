@@ -9,7 +9,8 @@ use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_store::StoreExt as _;
 
 use super::{AppState, hotkey, lock, logging, tray};
-use crate::core::settings::{Settings, normalize_hotkey, strip_utf8_bom};
+use crate::core::settings::{SHOW_ARG, Settings, normalize_hotkey, strip_utf8_bom};
+use crate::platform;
 
 pub const LABEL: &str = "settings";
 /// Fixed width; settings.ts uses the same value when it fits the height.
@@ -64,11 +65,17 @@ pub fn open_window(app: &AppHandle) {
         let _ = window.set_focus();
         return;
     }
+    // GTK ignores resize requests on non-resizable windows and gives them the
+    // webview's natural height (the whole screen). On Linux the window stays
+    // resizable instead, with its width pinned by size constraints.
+    let resizable = cfg!(target_os = "linux");
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
         // The page sets the height to fit its content, then shows the window.
         .inner_size(SETTINGS_WIDTH, 400.0)
-        .resizable(false)
+        .min_inner_size(SETTINGS_WIDTH, 200.0)
+        .max_inner_size(SETTINGS_WIDTH, 2000.0)
+        .resizable(resizable)
         .maximizable(false)
         .center()
         .visible(false)
@@ -92,6 +99,14 @@ pub struct SettingsView {
     settings: Settings,
     hotkey_error: Option<String>,
     log_dir: Option<String>,
+    /// Command for a desktop shortcut where global hotkeys are limited.
+    show_command: Option<String>,
+}
+
+/// `"<this exe>" --show`, for a desktop keyboard shortcut.
+fn show_command() -> Option<String> {
+    let exe = std::env::current_exe().ok()?;
+    Some(format!("\"{}\" {SHOW_ARG}", exe.display()))
 }
 
 #[tauri::command]
@@ -100,6 +115,9 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
         settings: lock(&state.settings).clone(),
         hotkey_error: lock(&state.hotkey_error).clone(),
         log_dir: logging::dir().map(|dir| dir.display().to_string()),
+        show_command: platform::global_hotkey_is_limited()
+            .then(show_command)
+            .flatten(),
     }
 }
 

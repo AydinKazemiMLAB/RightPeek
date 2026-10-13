@@ -13,7 +13,7 @@ use std::time::Instant;
 
 use tauri::{AppHandle, Manager, RunEvent};
 
-use crate::core::settings::{Settings, open_settings_on_start};
+use crate::core::settings::{Settings, open_settings_on_start, wants_capture};
 use viewer::ViewerContent;
 
 /// State shared by commands, the hotkey handler and the tray.
@@ -49,6 +49,9 @@ pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show = open_settings_on_start(&lock(&state.settings), hotkey_failed, std::env::args());
     if show {
         settings::open_window(app);
+    }
+    if wants_capture(std::env::args()) {
+        hotkey::capture_and_show(app);
     }
     Ok(())
 }

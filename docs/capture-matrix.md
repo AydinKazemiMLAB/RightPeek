@@ -60,3 +60,33 @@ substitutes. Edge was tested as the PDF reader.
 - Elevated (administrator) windows: `AccessDenied` by design (UIPI); no workaround.
 - Apps that block copy or have no selection: `NothingSelected` after ~500 ms.
 - Delay-rendered clipboard formats and GDI formats (bitmaps, metafiles) are not restored.
+
+## Linux (Phase 5)
+
+Method: `PrimarySelection` (the X11/Wayland PRIMARY selection holds the
+selected text; no copy is simulated and the clipboard is never touched).
+Environment: Ubuntu 24.04 in WSL2 with WSLg (Weston compositor + XWayland),
+release `.deb` installed. Outcomes read from the RightPeek log (char count,
+method, elapsed); the viewer was checked by screenshot (RTL, ZWNJ intact).
+
+| Target | Trigger | Text correct | Elapsed (ms) | Notes |
+|---|---|---|---|---|
+| X11 selection (`xclip -selection primary`) | Ctrl+Shift+Space | ✅ (22 chars, Persian) | 2 | |
+| X11 selection (`xclip`) | `rightpeek --show` (second launch) | ✅ (24 chars, ZWNJ kept) | 2 | Forwarded through single-instance |
+| gedit (GTK 3, X11 backend), Select All | Ctrl+Shift+Space | ✅ (33 chars, 2 lines) | 4 | |
+| xterm, double-click a word | Ctrl+Shift+Space | ✅ (13 chars) | 5 | |
+| Nothing running, `rightpeek --show` | first launch | ✅ | — | Starts the app, then captures |
+| CI: Xvfb on `ubuntu-22.04` / `ubuntu-24.04` | `--show` | ✅ | — | `scripts/linux-smoke.sh` |
+| Wayland-native app on WSLg | — | n/a | — | Weston has no primary-selection protocol; RightPeek reports "No text selected" |
+
+### Known limits (Linux)
+
+- **Wayland:** the global hotkey (X11 `XGrabKey` through XWayland) only fires
+  while an X11 app has focus. Users bind a desktop shortcut to
+  `rightpeek --show`; Settings shows the exact command on Wayland.
+- **Wayland PRIMARY:** read through `arboard` when the compositor offers the
+  data-control protocol (KDE, wlroots), otherwise through `wl-paste --primary`
+  (GNOME); compositors without primary selection (Weston/WSLg) have none.
+  Not yet tested on a real GNOME/KDE desktop (no Linux machine; WSLg only).
+- Some X11 apps keep their PRIMARY selection after the text is deselected, so
+  RightPeek shows the last selected text instead of "No text selected".
