@@ -2985,6 +2985,7 @@ name = "rightpeek"
 version = "0.1.0"
 dependencies = [
  "arboard",
+ "auto-launch",
  "serde",
  "serde_json",
  "tauri",
