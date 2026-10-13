@@ -71,9 +71,13 @@ sudo apt install ./RightPeek_<version>_amd64.deb
 sudo dnf install ./RightPeek-<version>-1.x86_64.rpm
 ```
 
-The package manager pulls in WebKitGTK 4.1. Packages are built on Ubuntu 22.04
-and work on newer Debian, Ubuntu and Fedora releases. On Wayland, also install
+The package manager pulls in WebKitGTK 4.1. On Wayland, also install
 `wl-clipboard` (the `.deb` recommends it).
+
+**Supported versions (64-bit x86):** Ubuntu 22.04, Linux Mint 21, Debian 12,
+Fedora 39 or newer. Older releases such as Ubuntu 20.04, Linux Mint 20 and
+Debian 11 have no WebKitGTK 4.1, so apt reports
+`libwebkit2gtk-4.1-0 but it is not installable`; upgrade the system first.
 
 ## Use
 
