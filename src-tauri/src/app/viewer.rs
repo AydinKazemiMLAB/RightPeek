@@ -57,6 +57,15 @@ impl ViewerContent {
     pub fn from_error(error: &CaptureError) -> Self {
         Self::notice(error.title(), error.hint())
     }
+
+    /// Text handed over by the macOS Services menu.
+    #[cfg(target_os = "macos")]
+    pub fn from_service(raw: &str) -> Self {
+        match crate::core::capture::selection_text([raw.to_owned()]) {
+            Some(text) => Self::from_text(&text),
+            None => Self::from_error(&CaptureError::NothingSelected),
+        }
+    }
 }
 
 #[derive(Serialize)]

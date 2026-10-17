@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged into the bundle's Info.plist by the Tauri bundler (macOS only). -->
+<plist version="1.0">
+<dict>
+	<!-- Services menu: right-click selected text > Services > Show in RightPeek.
+	     Handled by ServiceProvider in src/platform/macos.rs (showSelection:userData:error:). -->
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Show in RightPeek</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>showSelection</string>
+			<key>NSPortName</key>
+			<string>RightPeek</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSStringPboardType</string>
+			</array>
+			<!-- Present: the entry is enabled by default and shown in context menus. -->
+			<key>NSRequiredContext</key>
+			<dict/>
+		</dict>
+	</array>
+</dict>
+</plist>

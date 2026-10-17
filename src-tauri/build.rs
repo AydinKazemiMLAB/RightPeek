@@ -12,6 +12,7 @@ fn main() {
         "set_autostart",
         "set_logging",
         "set_show_settings_on_start",
+        "request_capture_permission",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("failed to run tauri-build");

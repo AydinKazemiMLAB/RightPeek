@@ -16,13 +16,26 @@
           <input id="hotkey" type="text" readonly placeholder="Press a key combination" />
           <button id="save-hotkey" type="button">Save</button>
         </div>
-        <span class="hint">Click the box and press the new combination, e.g. Ctrl+Shift+Space.</span>
+        <span class="hint">Click the box and press the new combination.</span>
         <span id="show-command" class="hint" hidden>
           On Wayland this shortcut only works while an X11 app is focused. For every app, add
           a keyboard shortcut in your desktop settings that runs:
           <code id="show-command-line" class="path"></code>
         </span>
         <span id="hotkey-message" class="message" role="status"></span>
+      </div>
+      <div id="permission" class="field" hidden>
+        <label>Accessibility permission</label>
+        <div class="row">
+          <span id="permission-status" class="status"></span>
+          <button id="request-permission" type="button">Open System Settings</button>
+        </div>
+        <span class="hint">
+          The shortcut reads the selected text through Accessibility. Turn on RightPeek in
+          Privacy &amp; Security &gt; Accessibility. After an update, remove RightPeek from
+          that list and add it again if the shortcut stops working. The Services menu
+          (right-click &gt; Services &gt; Show in RightPeek) works without it.
+        </span>
       </div>
       <div class="field">
         <label><input id="autostart" type="checkbox" /> Start RightPeek when you sign in</label>

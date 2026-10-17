@@ -13,8 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Linux builds on the oldest supported Ubuntu (glibc) like release.yml.
-        os: [windows-latest, ubuntu-22.04]
+        # Linux builds on the oldest supported Ubuntu (glibc) like release.yml;
+        # macos-latest is Apple Silicon, the only macOS target.
+        os: [windows-latest, ubuntu-22.04, macos-latest]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
