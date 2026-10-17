@@ -5,6 +5,8 @@ use crate::core::capture::SelectionProvider;
 
 #[cfg(target_os = "linux")]
 mod linux;
+#[cfg(target_os = "macos")]
+mod macos;
 #[cfg(windows)]
 mod windows;
 
@@ -18,9 +20,56 @@ pub fn selection_provider() -> Box<dyn SelectionProvider + Send + Sync> {
     {
         Box::new(self::linux::LinuxSelectionProvider)
     }
-    #[cfg(not(any(windows, target_os = "linux")))]
+    #[cfg(target_os = "macos")]
+    {
+        Box::new(self::macos::MacSelectionProvider)
+    }
+    #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
     {
         Box::new(Unsupported)
+    }
+}
+
+/// Whether capture has the OS permission it needs; `None` where capture
+/// needs no permission (everywhere but macOS: Accessibility).
+pub fn capture_permission() -> Option<bool> {
+    #[cfg(target_os = "macos")]
+    {
+        Some(self::macos::is_trusted(false))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        None
+    }
+}
+
+/// Asks for the capture permission: the system prompt (adds the app to the
+/// list) plus the System Settings pane where it is turned on.
+pub fn request_capture_permission() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        if self::macos::is_trusted(true) {
+            return Ok(());
+        }
+        self::macos::open_accessibility_settings()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(())
+    }
+}
+
+/// Registers the Services menu entry ("Show in RightPeek"); `handler` gets
+/// the selected text. macOS only, on the main thread; a no-op elsewhere.
+pub fn register_services(handler: Box<dyn Fn(String) + Send + Sync>) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        self::macos::register_services(handler)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        drop(handler);
+        Ok(())
     }
 }
 
@@ -32,14 +81,19 @@ pub fn capture_via_clipboard(
     {
         self::windows::capture_via_clipboard(timeout)
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        run_with_timeout(timeout, self::macos::capture_via_copy)
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         let _ = timeout;
         Err(crate::core::capture::CaptureError::Unsupported)
     }
 }
 
-/// Runs only UI Automation (diagnostics only: capture probe).
+/// Runs only the accessibility API: UI Automation on Windows, `AXSelectedText`
+/// on macOS (diagnostics only: capture probe).
 pub fn capture_via_uia(
     timeout: std::time::Duration,
 ) -> Result<crate::core::capture::Captured, crate::core::capture::CaptureError> {
@@ -47,7 +101,11 @@ pub fn capture_via_uia(
     {
         self::windows::capture_via_uia(timeout)
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        run_with_timeout(timeout, self::macos::capture_via_accessibility)
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         let _ = timeout;
         Err(crate::core::capture::CaptureError::Unsupported)
@@ -60,7 +118,11 @@ pub fn clipboard_text() -> Option<String> {
     {
         self::windows::clipboard_text()
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        self::macos::clipboard_text()
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         None
     }
@@ -75,7 +137,7 @@ pub fn global_hotkey_is_limited() -> bool {
 
 /// Runs `job` on a fresh thread and gives up after `timeout`. A job that
 /// overruns keeps running detached; its OS objects never leave its thread.
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 fn run_with_timeout<T, F>(
     timeout: std::time::Duration,
     job: F,
@@ -99,10 +161,10 @@ where
         .map_err(|_| CaptureError::Timeout)?
 }
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 struct Unsupported;
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 impl SelectionProvider for Unsupported {
     fn capture(
         &self,
@@ -112,7 +174,7 @@ impl SelectionProvider for Unsupported {
     }
 }
 
-#[cfg(all(test, any(windows, target_os = "linux")))]
+#[cfg(all(test, any(windows, target_os = "linux", target_os = "macos")))]
 mod tests {
     use std::thread;
     use std::time::Duration;
