@@ -33,6 +33,27 @@
   point at `/usr/bin/rightpeek`. Settings and logs in
   `~/.local/share/com.rightpeek.app` are kept (Linux convention).
 
+## macOS bundle
+
+- `src-tauri/tauri.macos.conf.json` overrides the bundle targets on macOS:
+  `RightPeek.app` and `RightPeek_<version>_aarch64.dmg`. Apple Silicon only
+  (decided 2026-10-17); minimum macOS 11.
+- Ad-hoc signed (`signingIdentity: "-"`, hardened runtime), not notarized:
+  Gatekeeper blocks the first open of a downloaded copy (README: System
+  Settings > Privacy & Security > Open Anyway). Signing and notarization need
+  an Apple Developer account ($99/year) and the maintainer's approval.
+- `src-tauri/Info.plist` is merged into the bundle's `Info.plist`: the
+  `NSServices` entry "Show in RightPeek". The app sets the Accessory
+  activation policy at start (menu bar only, no Dock icon).
+- No uninstaller on macOS: users delete the app, and turn off "Start
+  RightPeek when you sign in" first (or delete
+  `~/Library/LaunchAgents/RightPeek.plist`).
+- Locally, build with `CI=true npm run tauri build`: without `CI` the dmg
+  script drives Finder through AppleScript to lay out the window, which
+  times out unless the terminal may control Finder.
+- The menu-bar icon is `src-tauri/icons/tray-macos.rgba` (raw RGBA template
+  image, drawn by `scripts/macos-tray-icon.swift`).
+
 ## Smoke test
 
 `scripts/installer-smoke.ps1` installs silently, launches the app, uninstalls
@@ -49,14 +70,20 @@ removes the package and checks that the binary, the desktop file and the
 autostart entry are gone. CI runs it under `dbus-run-session` on
 `ubuntu-22.04` and `ubuntu-24.04`.
 
+`scripts/macos-smoke.sh` mounts the dmg, copies the app out, checks the
+signature, the Services entry and the arm64 binary, starts the app, checks
+that a second launch is forwarded and exits, and quits. CI runs it on
+`macos-14` and `macos-15`. Capture is not covered there (CI cannot grant the
+Accessibility permission); see the macOS capture matrix.
+
 ## Cutting a release
 
 1. Bump `version` in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and
    `package.json`; merge to `main`.
 2. Run the Release workflow (push a `vX.Y.Z` tag, or start it by hand from
-   the Actions tab). It builds and smoke-tests the installer, the portable exe
-   and the Linux packages and keeps them as the run's artifacts
-   (`installer`, `linux-packages`). It creates no GitHub release.
+   the Actions tab). It builds and smoke-tests the installer, the portable exe,
+   the Linux packages and the macOS dmg and keeps them as the run's artifacts
+   (`installer`, `linux-packages`, `macos-dmg`). It creates no GitHub release.
 3. The maintainer creates the GitHub release by hand and attaches the files.
 
 No auto-updater for now: deferred in Phase 4 while the repository was

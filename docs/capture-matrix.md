@@ -90,3 +90,44 @@ method, elapsed); the viewer was checked by screenshot (RTL, ZWNJ intact).
   Not yet tested on a real GNOME/KDE desktop (no Linux machine; WSLg only).
 - Some X11 apps keep their PRIMARY selection after the text is deselected, so
   RightPeek shows the last selected text instead of "No text selected".
+
+## macOS (Phase 6)
+
+Methods: `Accessibility` (`AXSelectedText` of the focused element; the
+clipboard is never touched) first, then `Clipboard` (Cmd+C, pasteboard
+restored and marked `org.nspasteboard.TransientType`). Both need the
+Accessibility permission. The Services menu entry ("Show in RightPeek") gets
+the selection from macOS directly and needs no permission.
+Environment: the maintainer's Mac (Apple M5, macOS 26.6.2), release build
+installed in `~/Applications`, hotkey Cmd+Shift+Space. Outcomes were checked
+by the maintainer in the viewer; method, length and time come from the
+RightPeek log (2026-10-17).
+
+| Target | Trigger | Text correct | Notes |
+|---|---|---|---|
+| Notes | Cmd+Shift+Space | ✅ | Accessibility, 28 chars, 8 ms |
+| Safari, Chrome, VS Code, Terminal, Preview (PDF), Telegram | Cmd+Shift+Space | ✅ (all) | Log of this run: 4× Accessibility (0–8 ms), 3× Clipboard (177–224 ms) |
+| Clipboard after the Cmd+C captures | — | ✅ | `marker-123` copied before the run was still on the pasteboard |
+| Notes, Safari, Chrome, Terminal, Preview | Right-click > Services > Show in RightPeek | ✅ | |
+| VS Code, Telegram | Right-click | n/a | Their own context menus have no Services submenu; use the app menu (e.g. Code > Services) |
+| `NSPerformService("Show in RightPeek")` from a script | Services | ✅ | Viewer opened; development self-test |
+| AppKit `NSTextView` test window (`scripts/macos-test-target.swift`) | `--show` | ✅ (54 chars) | Accessibility, 0–12 ms; used by the budget script |
+| CI: `macos-14` / `macos-15` | start, second launch | ✅ | `scripts/macos-smoke.sh` (no capture: CI cannot grant Accessibility) |
+
+TextEdit, Firefox and Pages/Word were not tested (not installed or skipped).
+
+### Known limits (macOS)
+
+- **Accessibility permission:** without it the hotkey shows "Permission
+  needed" and the first refusal shows the system prompt. Ad-hoc signed builds
+  change identity on every update, so macOS may drop the grant: remove
+  RightPeek from Privacy & Security > Accessibility and add it again.
+- **Cmd+C fallback:** used where `AXSelectedText` is missing (browsers,
+  Electron, Qt apps). It sends key code 8 ("C" on QWERTY); keyboard layouts
+  that move C (e.g. Dvorak) copy nothing there. The copied text is on the
+  pasteboard for up to ~0.5 s, so a clipboard manager polling at that moment
+  may record it; the restore itself is marked transient and is skipped.
+- **Services in context menus:** apps with custom context menus (Electron,
+  Qt) do not list Services; the app menu's Services submenu still works, and
+  a keyboard shortcut can be assigned to the service in System Settings >
+  Keyboard > Keyboard Shortcuts > Services.
