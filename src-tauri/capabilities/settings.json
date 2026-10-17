@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "Settings window: read settings, change the hotkey, autostart, logging and showing Settings at start-up, fit its height to the content and show itself, close itself.",
+  "description": "Settings window: read settings, change the hotkey, autostart, logging and showing Settings at start-up, ask for the capture permission (macOS Accessibility), fit its height to the content and show itself, close itself.",
   "windows": ["settings"],
   "permissions": [
     "core:window:allow-close",
@@ -12,6 +12,7 @@
     "allow-set-hotkey",
     "allow-set-autostart",
     "allow-set-logging",
-    "allow-set-show-settings-on-start"
+    "allow-set-show-settings-on-start",
+    "allow-request-capture-permission"
   ]
 }

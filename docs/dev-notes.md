@@ -1,4 +1,4 @@
-# Windows/Tauri development notes
+# Development notes
 
 Gotchas learned in Phases 0–4. Check these before debugging something that
 looks like one of them.
@@ -44,3 +44,29 @@ looks like one of them.
   resizable with its width pinned by min/max size.
 - The single-instance plugin uses the DBus session bus; headless runs need
   `dbus-run-session`.
+
+## macOS
+
+- Built and tested on the maintainer's Mac (Apple Silicon). Local release
+  bundles: `CI=true npm run tauri build` (without `CI` the dmg step drives
+  Finder through AppleScript and times out unless the terminal may control
+  Finder).
+- TCC (Accessibility) checks the *responsible* process: a binary started
+  from a terminal is judged by the terminal's permission, not RightPeek's.
+  Start the app with `open` (scripts do: `open -g --env VAR=... -a App`).
+- Every rebuild of an ad-hoc signed app changes its code identity; macOS may
+  keep showing RightPeek as allowed while denying it. Remove it from
+  Privacy & Security > Accessibility and add it again. Avoid rebuilding in
+  the middle of a manual test session.
+- The Services entry only appears for an app in `/Applications` or
+  `~/Applications`; refresh with `/System/Library/CoreServices/pbs -update`
+  and check with `pbs -dump_pboard`. Test the handler without clicking:
+  `NSPerformService("Show in RightPeek", pasteboard)` from a Swift script.
+- `NSApplication.servicesProvider` is not retained; the provider is leaked
+  on purpose so it lives as long as the app.
+- Electron and Qt apps (VS Code, Telegram) build their own context menus
+  without Services; browsers and Electron also lack `AXSelectedText`, so
+  capture there goes through Cmd+C.
+- Agent sessions cannot screenshot (no Screen Recording permission) or post
+  keys to other apps; list windows with `CGWindowListCopyWindowInfo` from a
+  Swift script and ask the maintainer to check visuals.
