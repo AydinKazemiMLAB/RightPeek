@@ -119,7 +119,7 @@ with a selected Persian sentence (read through Accessibility).
 | Metric | Target | Run 1 | Run 2 | Status |
 |---|---|---|---|---|
 | Idle RAM, app only (footprint) | ≤ 20 MB | 14.0 MB | 14.0 MB | ✅ |
-| RAM with viewer open (incl. WebKit helpers) | ≤ 120 MB | 114.5 MB | 124.5 MB | ⚠️ at the limit |
+| RAM with viewer open (incl. WebKit helpers) | ≤ 120 MB | 114.5 MB | 124.5 MB | ⚠️ at the limit; accepted by the user |
 | Capture → text visible, warm | ≤ 300 ms | 41 ms | 43 ms | ✅ |
 | Capture → text visible, cold webview | ≤ 600 ms | 259 ms | 244 ms | ✅ |
 | CPU while idle (30 s) | ~0% | 0 s CPU time | 0 s CPU time | ✅ |
