@@ -238,7 +238,7 @@ Progress is tracked with the checkboxes below (ticked when done and approved). E
 - [ ] Notarization — deferred: needs an Apple Developer account ($99/year) and the maintainer's approval.
 - [x] **Done when:** hotkey and Services show the selection on the maintainer's Mac in the tested apps; the dmg installs and runs (local and CI smoke test).
 - Decisions (2026-10-17): Apple Silicon only (no universal binary); ad-hoc signing, no notarization for now; objc2-family crates approved (`objc2`, `objc2-foundation`, `objc2-app-kit`, `objc2-core-foundation`, `objc2-core-graphics`, `objc2-application-services`); default hotkey Cmd+Shift+Space on macOS.
-- Open: RAM with the viewer open is at the §2 limit on macOS (114.5–124.5 MB, WebKit helpers included); agree a macOS budget with the user.
+- RAM with the viewer open is at the §2 limit on macOS (114.5–124.5 MB, WebKit helpers included; idle 13–14 MB). Accepted by the user as is (2026-10-17): most of it is WebKit's own helper processes, and the viewer is destroyed on close.
 
 ---
 
