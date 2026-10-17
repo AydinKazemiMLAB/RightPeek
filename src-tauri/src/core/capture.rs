@@ -11,6 +11,8 @@ pub enum CaptureMethod {
     Clipboard,
     /// Read from the X11/Wayland PRIMARY selection (no copy simulated).
     PrimarySelection,
+    /// Read through the macOS Accessibility API (`AXSelectedText`).
+    Accessibility,
 }
 
 /// Text captured from the foreground application.
@@ -31,6 +33,9 @@ pub enum CaptureError {
     AccessDenied,
     /// No capture backend exists for this platform yet.
     Unsupported,
+    /// The OS has not granted the permission capture needs (macOS
+    /// Accessibility).
+    PermissionNeeded,
     /// Unexpected OS failure, with a diagnostic message.
     Platform(String),
 }
@@ -44,6 +49,9 @@ impl std::fmt::Display for CaptureError {
                 f.write_str("Cannot read text from a window running as administrator.")
             }
             Self::Unsupported => f.write_str("Text capture is not supported on this platform."),
+            Self::PermissionNeeded => f.write_str(
+                "RightPeek needs the Accessibility permission to read the selection.",
+            ),
             Self::Platform(detail) => write!(f, "Text capture failed: {detail}"),
         }
     }
@@ -59,6 +67,7 @@ impl CaptureError {
             Self::Timeout => "The app did not respond",
             Self::AccessDenied => "Administrator window",
             Self::Unsupported => "Not supported",
+            Self::PermissionNeeded => "Permission needed",
             Self::Platform(_) => "Capture failed",
         }
     }
@@ -75,6 +84,9 @@ impl CaptureError {
                 capture it there."
                 .into(),
             Self::Unsupported => "Text capture is not available on this platform yet.".into(),
+            Self::PermissionNeeded => "Open System Settings > Privacy & Security > \
+                Accessibility, turn on RightPeek, then press the shortcut again."
+                .into(),
             Self::Platform(detail) => format!("Try again. Details: {detail}"),
         }
     }
@@ -154,6 +166,7 @@ mod tests {
             (CaptureError::Timeout, "The app did not respond"),
             (CaptureError::AccessDenied, "Administrator window"),
             (CaptureError::Unsupported, "Not supported"),
+            (CaptureError::PermissionNeeded, "Permission needed"),
             (CaptureError::Platform("x".into()), "Capture failed"),
         ];
         for (error, title) in cases {
@@ -237,6 +250,27 @@ mod tests {
         let captured = provider.capture(Duration::from_millis(10)).unwrap();
         assert_eq!(captured.text, "سلام");
         assert_eq!(captured.method, CaptureMethod::Uia);
+    }
+
+    #[test]
+    fn permission_needed_message_names_the_accessibility_permission() {
+        assert_eq!(
+            CaptureError::PermissionNeeded.to_string(),
+            "RightPeek needs the Accessibility permission to read the selection."
+        );
+    }
+
+    #[test]
+    fn permission_needed_hint_points_to_system_settings() {
+        let hint = CaptureError::PermissionNeeded.hint();
+        assert!(hint.contains("System Settings"), "{hint}");
+        assert!(hint.contains("Accessibility"), "{hint}");
+    }
+
+    #[test]
+    fn accessibility_is_its_own_method() {
+        assert_ne!(CaptureMethod::Accessibility, CaptureMethod::Uia);
+        assert_eq!(format!("{:?}", CaptureMethod::Accessibility), "Accessibility");
     }
 
     #[test]

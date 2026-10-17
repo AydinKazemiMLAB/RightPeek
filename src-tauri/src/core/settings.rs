@@ -2,6 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Cmd+Shift+Space on macOS (canonical form, see [`normalize_hotkey`]).
+#[cfg(target_os = "macos")]
+pub const DEFAULT_HOTKEY: &str = "Shift+Super+Space";
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_HOTKEY: &str = "Ctrl+Shift+Space";
 pub const DEFAULT_FONT_SIZE: u8 = 18;
 pub const MIN_FONT_SIZE: u8 = 12;
@@ -170,6 +174,24 @@ pub fn normalize_hotkey(input: &str) -> Result<String, HotkeyError> {
     Ok(parts.join("+"))
 }
 
+/// How a canonical hotkey is shown to the user. On macOS the modifiers get
+/// their Mac names (`Super` is Cmd, `Alt` is Option); the label still parses
+/// back through [`normalize_hotkey`].
+pub fn hotkey_label(hotkey: &str, macos: bool) -> String {
+    if !macos {
+        return hotkey.to_owned();
+    }
+    hotkey
+        .split('+')
+        .map(|part| match part {
+            "Super" => "Cmd",
+            "Alt" => "Option",
+            other => other,
+        })
+        .collect::<Vec<_>>()
+        .join("+")
+}
+
 /// Keeps a font size inside the supported range.
 pub fn clamp_font_size(size: u8) -> u8 {
     size.clamp(MIN_FONT_SIZE, MAX_FONT_SIZE)
@@ -237,7 +259,7 @@ mod tests {
     #[test]
     fn defaults_match_plan() {
         let settings = Settings::default();
-        assert_eq!(settings.hotkey, "Ctrl+Shift+Space");
+        assert_eq!(settings.hotkey, DEFAULT_HOTKEY);
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
         assert!(!settings.justify, "ragged edges are the default");
@@ -245,6 +267,40 @@ mod tests {
             settings.show_settings_on_start,
             "a first launch must show that the app is running"
         );
+    }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn default_hotkey_is_cmd_shift_space_on_macos() {
+        assert_eq!(DEFAULT_HOTKEY, "Shift+Super+Space");
+    }
+
+    #[test]
+    #[cfg(not(target_os = "macos"))]
+    fn default_hotkey_is_ctrl_shift_space_elsewhere() {
+        assert_eq!(DEFAULT_HOTKEY, "Ctrl+Shift+Space");
+    }
+
+    #[test]
+    fn default_hotkey_is_canonical() {
+        assert_eq!(normalize_hotkey(DEFAULT_HOTKEY).unwrap(), DEFAULT_HOTKEY);
+    }
+
+    #[test]
+    fn mac_label_uses_cmd_and_option() {
+        assert_eq!(hotkey_label("Shift+Super+Space", true), "Shift+Cmd+Space");
+        assert_eq!(hotkey_label("Ctrl+Alt+Super+Q", true), "Ctrl+Option+Cmd+Q");
+    }
+
+    #[test]
+    fn label_elsewhere_is_the_canonical_form() {
+        assert_eq!(hotkey_label("Ctrl+Alt+Super+Q", false), "Ctrl+Alt+Super+Q");
+    }
+
+    #[test]
+    fn mac_label_normalizes_back_to_the_canonical_form() {
+        let label = hotkey_label("Ctrl+Alt+Shift+Super+F5", true);
+        assert_eq!(normalize_hotkey(&label).unwrap(), "Ctrl+Alt+Shift+Super+F5");
     }
 
     #[test]
