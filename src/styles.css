@@ -216,6 +216,13 @@ body {
   user-select: text;
 }
 
-.settings .message.error {
+.settings .message.error,
+.settings .status.error {
   color: #d70015;
+}
+
+.settings .status {
+  flex: 1;
+  align-self: center;
+  color: inherit;
 }

@@ -11,6 +11,7 @@ use tauri_plugin_global_shortcut::{
 
 use super::viewer::{self, ViewerContent};
 use super::{AppState, lock, logging};
+use crate::core::settings::hotkey_label;
 use crate::platform;
 
 /// Overall capture budget (UIA + clipboard fallback).
@@ -72,7 +73,7 @@ pub fn register_from_settings(app: &AppHandle) {
         .global_shortcut()
         .register(hotkey.as_str())
         .err()
-        .map(|error| format!("Cannot register {hotkey}: {error}"));
+        .map(|error| format!("Cannot register {}: {error}", label(&hotkey)));
     match &error {
         Some(message) => logging::warn(message),
         None => logging::info(&format!("hotkey {hotkey} registered")),
@@ -99,8 +100,13 @@ pub fn replace(app: &AppHandle, new_hotkey: &str) -> Result<(), String> {
             let _ = shortcuts.register(old_hotkey.as_str());
             logging::warn(&format!("cannot register {new_hotkey}: {error}"));
             Err(format!(
-                "Cannot register {new_hotkey} (maybe another app uses it): {error}"
+                "Cannot register {} (maybe another app uses it): {error}",
+                label(new_hotkey)
             ))
         }
     }
+}
+
+fn label(hotkey: &str) -> String {
+    hotkey_label(hotkey, cfg!(target_os = "macos"))
 }

@@ -44,6 +44,18 @@ pub fn setup(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let log_enabled = lock(&state.settings).logging;
     logging::init(app, log_enabled);
     logging::info(&format!("RightPeek {} started", env!("CARGO_PKG_VERSION")));
+    #[cfg(target_os = "macos")]
+    {
+        // Menu-bar app: no Dock icon, no app menu.
+        app.set_activation_policy(tauri::ActivationPolicy::Accessory)?;
+        let handle = app.clone();
+        let services = crate::platform::register_services(Box::new(move |text| {
+            viewer::show(&handle, viewer::ViewerContent::from_service(&text), None);
+        }));
+        if let Err(error) = services {
+            logging::error(&format!("cannot register the Services menu entry: {error}"));
+        }
+    }
     hotkey::register_from_settings(app);
     tray::create(app)?;
     let hotkey_failed = lock(&state.hotkey_error).is_some();
