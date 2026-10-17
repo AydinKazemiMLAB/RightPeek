@@ -105,3 +105,29 @@ WSLg is not representative for memory; re-measure on a real Linux desktop.
 WebKitGTK runs the page in separate processes like WebView2; on WSLg they also
 carry the software GL stack. The memory misses are open: decide Linux budgets
 after measuring on a real desktop.
+
+## Phase 6 — macOS (2026-10-17)
+
+Measured with `scripts/measure-budgets-macos.sh` on the release bundle
+(`npm run tauri build`, installed in `~/Applications`) on the maintainer's
+Mac: Apple M5, macOS 26.6.2. Memory is the physical footprint (`footprint`),
+the macOS counterpart of the private working set; "viewer open" adds the
+three WebKit helper processes (WebContent, Networking, GPU) the viewer
+starts. Captures are requested with `--show` against an AppKit test window
+with a selected Persian sentence (read through Accessibility).
+
+| Metric | Target | Run 1 | Run 2 | Status |
+|---|---|---|---|---|
+| Idle RAM, app only (footprint) | ≤ 20 MB | 14.0 MB | 14.0 MB | ✅ |
+| RAM with viewer open (incl. WebKit helpers) | ≤ 120 MB | 114.5 MB | 124.5 MB | ⚠️ at the limit |
+| Capture → text visible, warm | ≤ 300 ms | 41 ms | 43 ms | ✅ |
+| Capture → text visible, cold webview | ≤ 600 ms | 259 ms | 244 ms | ✅ |
+| CPU while idle (30 s) | ~0% | 0 s CPU time | 0 s CPU time | ✅ |
+| Installer size (dmg) | ≤ 8 MB | 3.80 MB | — | ✅ (binary 4.49 MB, arm64) |
+
+Notes:
+- Footprint counts memory the way Activity Monitor's "Memory" column does;
+  WebKit's GPU process alone is a large share of the viewer-open figure.
+- Real hotkey captures in the maintainer's test session took 0–8 ms
+  (Accessibility) and 177–224 ms (Cmd+C fallback, mostly the wait for the
+  copy) before the viewer was shown.
