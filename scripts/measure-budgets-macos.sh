@@ -9,9 +9,11 @@
 # single-instance plugin forwards to the running app; the timing starts when
 # the running app receives it, like the hotkey timing on Windows.
 #
-# Before running: grant RightPeek the Accessibility permission and leave some
-# text selected in the frontmost window (without the permission the viewer
-# shows a notice, which is timed the same way).
+# The capture target is scripts/macos-test-target.swift (a window with a
+# selected Persian sentence). RightPeek needs the Accessibility permission;
+# without it the viewer shows a notice, which is timed the same way. The app
+# is started through `open` so macOS checks RightPeek's own permission, not
+# the terminal's.
 #
 # Usage: scripts/measure-budgets-macos.sh path/to/RightPeek.app [idle-seconds]
 set -euo pipefail
@@ -33,6 +35,8 @@ timings() { grep -Eo '[0-9]+' "$timing_log" || true; }
 
 measure_capture() {
   local before
+  kill -USR1 "$target"
+  sleep 1
   before=$(timings | wc -l)
   "$exe" --show
   for _ in $(seq 100); do
@@ -44,15 +48,26 @@ measure_capture() {
 
 pgrep -x "$(basename "$exe")" >/dev/null && { echo "RightPeek is already running; quit it first." >&2; exit 1; }
 
-RIGHTPEEK_TIMING_LOG="$timing_log" "$exe" --autostart &
-pid=$!
-trap 'kill $pid 2>/dev/null || true; rm -f "$timing_log"' EXIT
+open -g --env RIGHTPEEK_TIMING_LOG="$timing_log" -a "$app" --args --autostart
+for _ in $(seq 50); do
+  pid=$(pgrep -x "$(basename "$exe")" || true)
+  [ -n "$pid" ] && break
+  sleep 0.2
+done
+[ -n "$pid" ] || { echo "RightPeek did not start." >&2; exit 1; }
+target=""
+trap 'kill $pid $target 2>/dev/null || true; rm -f "$timing_log" "$timing_log.target"' EXIT
 sleep 5
 
 idle_ram=$(footprint_mb -p "$pid")
 cpu_start=$(ps -o time= -p "$pid")
 sleep "$idle_seconds"
 cpu_end=$(ps -o time= -p "$pid")
+
+swiftc -o "$timing_log.target" "$(dirname "$0")/macos-test-target.swift"
+"$timing_log.target" 60 &
+target=$!
+sleep 4
 
 webkit_before=$(webkit_pids)
 cold=$(measure_capture)

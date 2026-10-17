@@ -37,4 +37,4 @@ Run from repo root:
 `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`,
 `cargo test --manifest-path src-tauri/Cargo.toml`, `npm run build`, `graft check`;
 from Phase 2 also measure the budgets in PLAN.md §2 with
-`scripts/measure-budgets.ps1` (release build) and record them in `docs/budgets.md`.
+`scripts/measure-budgets.ps1` (release build; `scripts/measure-budgets-macos.sh` on macOS) and record them in `docs/budgets.md`.
