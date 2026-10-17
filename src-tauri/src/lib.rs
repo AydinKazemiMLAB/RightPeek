@@ -53,6 +53,7 @@ pub fn run() {
             app::settings::set_autostart,
             app::settings::set_logging,
             app::settings::set_show_settings_on_start,
+            app::settings::request_capture_permission,
         ])
         .setup(|app| app::setup(app.handle()))
         .build(tauri::generate_context!())

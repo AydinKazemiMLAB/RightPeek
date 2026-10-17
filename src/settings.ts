@@ -5,6 +5,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 
 interface SettingsView {
+  /** The hotkey as shown to the user (Cmd/Option names on macOS). */
+  hotkeyLabel: string;
+  /** macOS Accessibility permission; null where capture needs none. */
+  capturePermission: boolean | null;
   settings: {
     hotkey: string;
     autostart: boolean;
@@ -38,6 +42,10 @@ const showOnStartBox = document.querySelector<HTMLInputElement>("#show-on-start"
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
 const showCommand = document.querySelector<HTMLElement>("#show-command")!;
 const showCommandLine = document.querySelector<HTMLElement>("#show-command-line")!;
+const permission = document.querySelector<HTMLElement>("#permission")!;
+const permissionStatus = document.querySelector<HTMLElement>("#permission-status")!;
+const requestPermission = document.querySelector<HTMLButtonElement>("#request-permission")!;
+const isMac = navigator.userAgent.includes("Mac");
 
 function showMessage(element: HTMLElement, text: string, isError: boolean): void {
   element.textContent = text;
@@ -49,9 +57,9 @@ function comboFromEvent(event: KeyboardEvent): string | null {
   if (MODIFIER_CODES.has(event.code)) return null;
   const parts: string[] = [];
   if (event.ctrlKey) parts.push("Ctrl");
-  if (event.altKey) parts.push("Alt");
+  if (event.altKey) parts.push(isMac ? "Option" : "Alt");
   if (event.shiftKey) parts.push("Shift");
-  if (event.metaKey) parts.push("Super");
+  if (event.metaKey) parts.push(isMac ? "Cmd" : "Super");
   parts.push(event.code);
   return parts.join("+");
 }
@@ -89,6 +97,24 @@ showOnStartBox.addEventListener("change", async () => {
   });
 });
 
+function showPermission(granted: boolean | null): void {
+  permission.hidden = granted === null;
+  permissionStatus.textContent = granted ? "Allowed" : "Not allowed";
+  permissionStatus.classList.toggle("error", granted === false);
+  requestPermission.hidden = granted === true;
+}
+
+requestPermission.addEventListener("click", async () => {
+  showPermission(await invoke<boolean>("request_capture_permission"));
+});
+
+// The permission is granted in System Settings; refresh on coming back.
+window.addEventListener("focus", async () => {
+  if (permission.hidden) return;
+  const view = await invoke<SettingsView>("get_settings");
+  showPermission(view.capturePermission);
+});
+
 loggingBox.addEventListener("change", async () => {
   loggingBox.checked = await invoke<boolean>("set_logging", { enabled: loggingBox.checked });
 });
@@ -112,7 +138,8 @@ async function fitToContent(): Promise<void> {
 
 async function load(): Promise<void> {
   const view = await invoke<SettingsView>("get_settings");
-  hotkeyInput.value = view.settings.hotkey;
+  hotkeyInput.value = view.hotkeyLabel;
+  showPermission(view.capturePermission);
   autostartBox.checked = view.settings.autostart;
   loggingBox.checked = view.settings.logging;
   showOnStartBox.checked = view.settings.showSettingsOnStart;
