@@ -49,9 +49,9 @@ impl std::fmt::Display for CaptureError {
                 f.write_str("Cannot read text from a window running as administrator.")
             }
             Self::Unsupported => f.write_str("Text capture is not supported on this platform."),
-            Self::PermissionNeeded => f.write_str(
-                "RightPeek needs the Accessibility permission to read the selection.",
-            ),
+            Self::PermissionNeeded => {
+                f.write_str("RightPeek needs the Accessibility permission to read the selection.")
+            }
             Self::Platform(detail) => write!(f, "Text capture failed: {detail}"),
         }
     }
@@ -270,7 +270,10 @@ mod tests {
     #[test]
     fn accessibility_is_its_own_method() {
         assert_ne!(CaptureMethod::Accessibility, CaptureMethod::Uia);
-        assert_eq!(format!("{:?}", CaptureMethod::Accessibility), "Accessibility");
+        assert_eq!(
+            format!("{:?}", CaptureMethod::Accessibility),
+            "Accessibility"
+        );
     }
 
     #[test]

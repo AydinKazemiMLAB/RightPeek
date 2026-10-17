@@ -1,7 +1,8 @@
 name: Release
 
-# Builds the NSIS installer and the portable exe (Windows) and the .deb/.rpm
-# packages (Linux) and smoke-tests them on clean runners. The files are the
+# Builds the NSIS installer and the portable exe (Windows), the .deb/.rpm
+# packages (Linux) and the .dmg (macOS, Apple Silicon, ad-hoc signed) and
+# smoke-tests them on clean runners. The files are the
 # run's artifacts; the maintainer creates GitHub releases by hand. Unsigned
 # for now (docs/release.md).
 on:
@@ -13,11 +14,14 @@ on:
     paths:
       - src-tauri/tauri.conf.json
       - src-tauri/tauri.linux.conf.json
+      - src-tauri/tauri.macos.conf.json
+      - src-tauri/Info.plist
       - src-tauri/windows/**
       - src-tauri/linux/**
       - src-tauri/icons/**
       - scripts/installer-smoke.ps1
       - scripts/linux-smoke.sh
+      - scripts/macos-smoke.sh
       - .github/workflows/release.yml
 
 permissions:
@@ -151,3 +155,50 @@ jobs:
 
       - name: Install, capture, remove
         run: dbus-run-session -- bash scripts/linux-smoke.sh "$(find packages -name '*.deb' | head -1)"
+
+  build-macos:
+    # Apple Silicon runner; the bundle is arm64 only.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build app and dmg
+        run: npm run tauri build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  smoke-macos:
+    needs: build-macos
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-dmg
+          path: dmg
+
+      - name: Mount, run, quit
+        run: bash scripts/macos-smoke.sh "$(find dmg -name '*.dmg' | head -1)"

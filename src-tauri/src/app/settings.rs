@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_store::StoreExt as _;
 
 use super::{AppState, autostart, hotkey, lock, logging, tray};
-use crate::core::settings::{SHOW_ARG, Settings, normalize_hotkey, strip_utf8_bom};
+use crate::core::settings::{SHOW_ARG, Settings, hotkey_label, normalize_hotkey, strip_utf8_bom};
 use crate::platform;
 
 pub const LABEL: &str = "settings";
@@ -101,6 +101,11 @@ pub async fn open_settings(app: AppHandle) {
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {
     settings: Settings,
+    /// The hotkey as shown to the user (Cmd/Option names on macOS).
+    hotkey_label: String,
+    /// Whether capture may use the Accessibility API (macOS); `None` where
+    /// capture needs no permission.
+    capture_permission: Option<bool>,
     hotkey_error: Option<String>,
     log_dir: Option<String>,
     /// Command for a desktop shortcut where global hotkeys are limited.
@@ -115,8 +120,11 @@ fn show_command() -> Option<String> {
 
 #[tauri::command]
 pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
+    let settings = lock(&state.settings).clone();
     SettingsView {
-        settings: lock(&state.settings).clone(),
+        hotkey_label: label(&settings.hotkey),
+        capture_permission: platform::capture_permission(),
+        settings,
         hotkey_error: lock(&state.hotkey_error).clone(),
         log_dir: logging::dir().map(|dir| dir.display().to_string()),
         show_command: platform::global_hotkey_is_limited()
@@ -125,7 +133,12 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
     }
 }
 
+fn label(hotkey: &str) -> String {
+    hotkey_label(hotkey, cfg!(target_os = "macos"))
+}
+
 /// Validates and registers a new hotkey; keeps the old one on failure.
+/// Returns the hotkey as shown to the user.
 #[tauri::command]
 pub fn set_hotkey(app: AppHandle, hotkey: String) -> Result<String, String> {
     let hotkey = normalize_hotkey(&hotkey).map_err(|e| e.to_string())?;
@@ -136,7 +149,15 @@ pub fn set_hotkey(app: AppHandle, hotkey: String) -> Result<String, String> {
     }
     tray::refresh_tooltip(&app);
     replaced?;
-    Ok(hotkey)
+    Ok(label(&hotkey))
+}
+
+/// Settings "Allow" button: the system prompt plus the Accessibility pane of
+/// System Settings (macOS). Returns whether the permission is granted now.
+#[tauri::command]
+pub fn request_capture_permission() -> Result<bool, String> {
+    platform::request_capture_permission()?;
+    Ok(platform::capture_permission().unwrap_or(true))
 }
 
 #[tauri::command]
