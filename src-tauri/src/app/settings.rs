@@ -4,14 +4,18 @@ use std::collections::HashMap;
 use std::error::Error;
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_store::StoreExt as _;
 
-use super::{AppState, autostart, hotkey, lock, logging, tray};
-use crate::core::settings::{SHOW_ARG, Settings, hotkey_label, normalize_hotkey, strip_utf8_bom};
+use super::{AppState, autostart, hotkey, lock, logging, tray, viewer};
+use crate::core::settings::{
+    SHOW_ARG, Settings, Theme, hotkey_label, normalize_hotkey, strip_utf8_bom,
+};
 use crate::platform;
 
 pub const LABEL: &str = "settings";
+/// Tells an open viewer to switch theme; the payload is the new `Theme`.
+pub const THEME_EVENT: &str = "rightpeek://theme";
 /// Fixed width; settings.ts uses the same value when it fits the height.
 const SETTINGS_WIDTH: f64 = 460.0;
 const STORE_FILE: &str = "settings.json";
@@ -73,8 +77,10 @@ pub fn open_window(app: &AppHandle) {
     // webview's natural height (the whole screen). On Linux the window stays
     // resizable instead, with its width pinned by size constraints.
     let resizable = cfg!(target_os = "linux");
+    let theme = lock(&app.state::<AppState>().settings).theme;
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("settings.html".into()))
         .title("RightPeek Settings")
+        .theme(native_theme(theme))
         // The page sets the height to fit its content, then shows the window.
         .inner_size(SETTINGS_WIDTH, 400.0)
         .min_inner_size(SETTINGS_WIDTH, 200.0)
@@ -166,6 +172,31 @@ pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<bool, String> {
     lock(&app.state::<AppState>().settings).autostart = enabled;
     save(&app);
     Ok(enabled)
+}
+
+/// The window theme for `theme`; `None` follows the system. It colors the
+/// native frame and sets the page's prefers-color-scheme where the webview
+/// follows it (WebView2, WebKit on macOS).
+pub fn native_theme(theme: Theme) -> Option<tauri::Theme> {
+    match theme {
+        Theme::System => None,
+        Theme::Light => Some(tauri::Theme::Light),
+        Theme::Dark => Some(tauri::Theme::Dark),
+    }
+}
+
+/// Saves the theme and applies it to the open windows. The pages also set it
+/// themselves (data-theme), so it holds where the webview ignores the window
+/// theme: Settings from this result, the viewer from `THEME_EVENT`.
+#[tauri::command]
+pub fn set_theme(app: AppHandle, theme: Theme) -> Theme {
+    lock(&app.state::<AppState>().settings).theme = theme;
+    save(&app);
+    for window in app.webview_windows().values() {
+        let _ = window.set_theme(native_theme(theme));
+    }
+    let _ = app.emit_to(viewer::LABEL, THEME_EVENT, theme);
+    theme
 }
 
 #[tauri::command]

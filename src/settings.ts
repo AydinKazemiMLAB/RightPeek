@@ -1,8 +1,9 @@
-﻿// Settings page: records a hotkey combination and toggles autostart,
-// showing Settings at start-up, and logging.
+﻿// Settings page: records a hotkey combination, picks the theme and toggles
+// autostart, showing Settings at start-up, and logging.
 // Validation and registration happen in Rust (core::settings, app::hotkey).
 import { invoke } from "@tauri-apps/api/core";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
+import { type Theme, applyTheme } from "./theme";
 
 interface SettingsView {
   /** The hotkey as shown to the user (Cmd/Option names on macOS). */
@@ -15,6 +16,7 @@ interface SettingsView {
     fontSize: number;
     logging: boolean;
     showSettingsOnStart: boolean;
+    theme: Theme;
   };
   hotkeyError: string | null;
   logDir: string | null;
@@ -37,6 +39,7 @@ const hotkeyInput = document.querySelector<HTMLInputElement>("#hotkey")!;
 const hotkeyMessage = document.querySelector<HTMLElement>("#hotkey-message")!;
 const autostartBox = document.querySelector<HTMLInputElement>("#autostart")!;
 const autostartMessage = document.querySelector<HTMLElement>("#autostart-message")!;
+const themeSelect = document.querySelector<HTMLSelectElement>("#theme")!;
 const loggingBox = document.querySelector<HTMLInputElement>("#logging")!;
 const showOnStartBox = document.querySelector<HTMLInputElement>("#show-on-start")!;
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
@@ -91,6 +94,12 @@ autostartBox.addEventListener("change", async () => {
   }
 });
 
+themeSelect.addEventListener("change", async () => {
+  const theme = await invoke<Theme>("set_theme", { theme: themeSelect.value });
+  themeSelect.value = theme;
+  applyTheme(theme);
+});
+
 showOnStartBox.addEventListener("change", async () => {
   showOnStartBox.checked = await invoke<boolean>("set_show_settings_on_start", {
     enabled: showOnStartBox.checked,
@@ -140,6 +149,8 @@ async function load(): Promise<void> {
   const view = await invoke<SettingsView>("get_settings");
   hotkeyInput.value = view.hotkeyLabel;
   showPermission(view.capturePermission);
+  themeSelect.value = view.settings.theme;
+  applyTheme(view.settings.theme);
   autostartBox.checked = view.settings.autostart;
   loggingBox.checked = view.settings.logging;
   showOnStartBox.checked = view.settings.showSettingsOnStart;
