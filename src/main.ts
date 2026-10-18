@@ -3,6 +3,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { THEME_EVENT, type Theme, applyTheme } from "./theme";
 
 type Direction = "rtl" | "ltr" | "auto";
 
@@ -19,6 +20,7 @@ interface ViewerPayload {
   content: ViewerContent;
   fontSize: number;
   justify: boolean;
+  theme: Theme;
 }
 
 const FONT_STEP = 2;
@@ -35,14 +37,19 @@ const viewer = document.querySelector<HTMLElement>("#viewer")!;
 const status = document.querySelector<HTMLElement>("#status")!;
 const directionButton = document.querySelector<HTMLButtonElement>("#direction")!;
 const justifyButton = document.querySelector<HTMLButtonElement>("#justify")!;
+const editButton = document.querySelector<HTMLButtonElement>("#edit")!;
 
 let plainText = "";
 let fontSize = 18;
 let directionMode: DirectionMode = "auto";
 let justify = false;
+let editing = false;
+/** Bumped by every new capture, so a late edit result cannot replace it. */
+let generation = 0;
 
 function render(content: ViewerContent): void {
   viewer.replaceChildren();
+  editButton.disabled = content.kind === "notice";
   if (content.kind === "notice") {
     plainText = "";
     const notice = document.createElement("section");
@@ -91,8 +98,50 @@ function applyJustify(enabled: boolean): void {
   justifyButton.setAttribute("aria-pressed", String(enabled));
 }
 
+// Simple in-place editing: the rendered text becomes plain-text editable.
+// Leaving edit mode sends the text back through core (normalize, paragraphs,
+// direction) and renders the result. Edits stay in this window.
+function setEditing(enabled: boolean): void {
+  editing = enabled;
+  viewer.classList.toggle("editing", enabled);
+  editButton.setAttribute("aria-pressed", String(enabled));
+  if (enabled) {
+    viewer.contentEditable = "plaintext-only";
+    viewer.spellcheck = false;
+    viewer.focus();
+  } else {
+    viewer.removeAttribute("contenteditable");
+  }
+}
+
+async function finishEditing(): Promise<void> {
+  const text = editedText();
+  const started = generation;
+  setEditing(false);
+  const content = await invoke<ViewerContent>("prepare_text", { text });
+  if (started === generation) render(content);
+}
+
+// One line per paragraph element; a blank-line separator is an empty line.
+function editedText(): string {
+  return Array.from(viewer.childNodes, (node) =>
+    node instanceof HTMLElement && node.classList.contains("gap") ? "" : textOf(node),
+  ).join("\n");
+}
+
+// Enter in plain-text editing inserts "\n" (white-space: pre-wrap); a <br>
+// is a line break too, unless it is the placeholder that ends a block.
+function textOf(node: Node): string {
+  if (node instanceof Text) return node.data;
+  if (node.nodeName === "BR") return node.nextSibling ? "\n" : "";
+  return Array.from(node.childNodes, textOf).join("");
+}
+
 async function refresh(): Promise<void> {
   const payload = await invoke<ViewerPayload>("take_pending_text");
+  generation += 1;
+  setEditing(false);
+  applyTheme(payload.theme);
   applyFontSize(payload.fontSize);
   applyJustify(payload.justify);
   render(payload.content);
@@ -113,9 +162,10 @@ function flash(message: string): void {
 }
 
 async function copyAll(): Promise<void> {
-  if (!plainText) return;
+  const text = editing ? editedText() : plainText;
+  if (!text) return;
   try {
-    await navigator.clipboard.writeText(plainText);
+    await navigator.clipboard.writeText(text);
     flash("Copied");
   } catch {
     flash("Copy failed");
@@ -123,6 +173,10 @@ async function copyAll(): Promise<void> {
 }
 
 document.querySelector("#copy")!.addEventListener("click", () => void copyAll());
+editButton.addEventListener("click", () => {
+  if (editing) void finishEditing();
+  else setEditing(true);
+});
 document.querySelector("#smaller")!.addEventListener("click", () => void changeFontSize(-FONT_STEP));
 document.querySelector("#larger")!.addEventListener("click", () => void changeFontSize(FONT_STEP));
 document.querySelector("#settings")!.addEventListener("click", () => void invoke("open_settings"));
@@ -136,7 +190,9 @@ directionButton.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
+  if (event.key === "Escape" && editing) {
+    void finishEditing();
+  } else if (event.key === "Escape") {
     void getCurrentWindow().close();
   } else if (event.ctrlKey && (event.key === "=" || event.key === "+")) {
     event.preventDefault();
@@ -148,4 +204,5 @@ document.addEventListener("keydown", (event) => {
 });
 
 void listen(PENDING_EVENT, () => void refresh());
+void listen<Theme>(THEME_EVENT, (event) => applyTheme(event.payload));
 void refresh();

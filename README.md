@@ -19,8 +19,9 @@ clean viewer laid out the way it should be.
   starts with an English term still reads correctly.
 - **Faithful text.** The zero-width non-joiner (نیم‌فاصله) is kept; Arabic
   presentation forms copied from PDFs are turned back into normal letters.
-- **Viewer tools.** Copy, font size (Ctrl + / Ctrl −), force RTL or LTR,
-  justify, light and dark theme. Esc closes it.
+- **Viewer tools.** Copy, simple editing of the text (Edit; Esc when done),
+  font size (Ctrl + / Ctrl −), force RTL or LTR, justify. Light or dark theme
+  follows the system or is chosen in Settings. Esc closes it.
 - **Leaves your clipboard alone.** On Windows the clipboard is restored after
   reading and nothing lands in the Win+V history; on Linux the selection is
   read directly and the clipboard is never touched. On macOS most apps are
@@ -110,8 +111,8 @@ works without this permission.
 3. Read it in the viewer.
 
 On the first start RightPeek opens its Settings window so you can see it is
-running. There you can change the shortcut, start RightPeek when you sign in,
-and choose to start quietly in the tray. Open Settings again from the tray icon
+running. There you can change the shortcut, pick the theme, start RightPeek
+when you sign in, and choose to start quietly in the tray. Open Settings again from the tray icon
 or from the viewer.
 
 **Wayland (Linux):** global shortcuts only work while an X11 app has focus.

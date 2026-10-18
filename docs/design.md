@@ -123,8 +123,18 @@ Per-app results: [`capture-matrix.md`](capture-matrix.md).
   (U+200C, needed in Persian); trailing spaces trimmed; Arabic presentation
   forms (common in PDF text) turned back into base letters with NFKC applied
   to those characters only.
-- Controls: Copy, font size, force RTL/LTR, Justify, light/dark theme from the
-  system; Esc closes. Size and position are remembered.
+- Controls: Copy, Edit, font size, force RTL/LTR, Justify; Esc closes. Size
+  and position are remembered.
+- Edit is plain-text editing in place (`contenteditable="plaintext-only"`),
+  not an editor: Enter adds a line break inside the paragraph. Leaving edit
+  mode (the button or Esc) sends the text through `prepare_text`, the same
+  normalize/paragraph/direction path as a capture, and renders the result.
+  Edits live in the window only; "Show last" keeps the capture.
+- Theme: System (default, `prefers-color-scheme`), Light or Dark, chosen in
+  Settings. The window theme colors the native frame; pages also set
+  `data-theme` so the choice holds where the webview ignores the window
+  theme. An open viewer follows a change through the `rightpeek://theme`
+  event.
 
 ## Packaging
 
