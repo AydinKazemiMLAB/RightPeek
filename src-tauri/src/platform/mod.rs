@@ -1,5 +1,5 @@
 //! OS-specific implementations of [`SelectionProvider`]. Everything that
-//! touches native APIs lives here so `core` stays portable (docs/PLAN.md §3).
+//! touches native APIs lives here so `core` stays portable (docs/design.md).
 
 use crate::core::capture::SelectionProvider;
 

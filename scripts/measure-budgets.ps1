@@ -1,4 +1,4 @@
-﻿# Measures the docs/PLAN.md §2 budgets against a release build.
+﻿# Measures the docs/design.md budgets against a release build.
 #
 #   npm run tauri build -- --no-bundle
 #   powershell -ExecutionPolicy Bypass -File scripts/measure-budgets.ps1 -Modifiers Ctrl,Alt -Key Q

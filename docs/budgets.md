@@ -1,6 +1,6 @@
 # Budget measurements
 
-Budgets from docs/PLAN.md §2, measured with `scripts/measure-budgets.ps1` on a
+Budgets from docs/design.md, measured with `scripts/measure-budgets.ps1` on a
 release build (`npm run tauri build -- --no-bundle`). Machine: the user's
 Windows 11 laptop. Hotkey under test: Ctrl+Alt+Q for runs 1-2 (Ctrl+Alt+Space is
 taken by another app on this machine), Ctrl+Shift+Space (the new default) for run 3.
