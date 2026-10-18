@@ -131,3 +131,27 @@ Notes:
 - Real hotkey captures in the maintainer's test session took 0–8 ms
   (Accessibility) and 177–224 ms (Cmd+C fallback, mostly the wait for the
   copy) before the viewer was shown.
+
+## Theme choice and viewer editing — Windows (2026-10-18)
+
+Release build of the theme/edit change, same machine and script, hotkey
+Ctrl+Shift+Space, "Open this window when RightPeek starts" off for the run
+(otherwise Settings is open during the idle measurement).
+
+| Metric | Target | Run 1 | Run 2 | Status |
+|---|---|---|---|---|
+| Idle RAM, app only (private working set) | ≤ 20 MB | 1.6 MB | 1.6 MB | ✅ |
+| RAM with viewer open (incl. WebView2) | ≤ 120 MB | 89.3 MB | 87 MB | ✅ |
+| Hotkey → text visible, warm | ≤ 300 ms | 56 ms | 57 ms | ✅ |
+| Hotkey → text visible, cold webview | ≤ 600 ms | 535 ms | 511 ms | ✅ |
+| CPU while idle | ~0% | 0% | 0% | ✅ |
+| Release exe | — | 4.86 MB | 4.86 MB | — |
+
+Notes:
+- The feature adds no dependency and under 1 KB of script; RAM matches
+  Phase 3 (91 MB). Cold start is within the range seen before (Phase 2:
+  439–510 ms on typical runs, Phase 3: 412 ms); the WebView2 runtime has
+  been updated since, so the runs are not strictly comparable.
+- With the viewer and Settings both open the tree used 117–121 MB: the
+  second window costs about 30 MB until it is closed (unchanged by this
+  feature; Settings existed before).
