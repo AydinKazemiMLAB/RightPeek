@@ -1,6 +1,9 @@
 # RightPeek — agent conventions
 
-`docs/PLAN.md` is the source of truth (goals, budgets, architecture, phases). Read the
+`docs/internal/PLAN.md` is the source of truth (goals, budgets, architecture, phases;
+local only: `docs/internal/` is git-ignored, ask the maintainer for a copy if it is
+missing). Public summary: `docs/design.md`; build/test notes: `docs/development.md`
+and `docs/internal/dev-notes.md`. Read the
 relevant section before working; do not re-plan what it already decides.
 
 ## Language
@@ -9,7 +12,8 @@ relevant section before working; do not re-plan what it already decides.
   Exception: `README.fa.md`, the Persian user README (kept in sync with `README.md`).
 
 ## Layout
-- `docs/` — project docs (`PLAN.md`, `capture-matrix.md`, ...). New docs go here.
+- `docs/` — public project docs (`design.md`, `development.md`, `capture-matrix.md`,
+  ...); internal working docs in `docs/internal/` (not published).
 - `src/` — viewer frontend: vanilla TS + Vite, no framework.
 - `src-tauri/src/core/` — pure logic, no OS calls, unit-tested (TDD).
 - `src-tauri/src/platform/` — OS backends implementing `core::capture::SelectionProvider`.

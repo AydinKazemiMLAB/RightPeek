@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# macOS budget measurement (docs/PLAN.md §2), the counterpart of
+# macOS budget measurement (docs/design.md), the counterpart of
 # measure-budgets.ps1. Starts RightPeek.app, measures idle memory and CPU,
 # requests two captures (cold viewer, then warm), measures memory with the
 # viewer open (the WebKit helper processes it starts included), and quits.

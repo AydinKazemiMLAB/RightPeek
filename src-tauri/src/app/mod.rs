@@ -1,5 +1,5 @@
 //! App layer: tray, hotkey, single instance, autostart, settings, viewer
-//! (docs/PLAN.md §3). Pure logic stays in `core`, OS calls in `platform`.
+//! (docs/design.md). Pure logic stays in `core`, OS calls in `platform`.
 
 mod autostart;
 pub mod hotkey;

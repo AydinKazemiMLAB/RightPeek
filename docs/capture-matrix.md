@@ -1,6 +1,6 @@
 # Capture matrix (Phase 1)
 
-Results of `capture-probe` per target app (docs/PLAN.md §8, Phase 1).
+Results of `capture-probe` per target app (see docs/development.md).
 **Done when:** ≥ 9/11 apps return correct text, the clipboard is verifiably restored,
 and nothing appears in Win+V history.
 
