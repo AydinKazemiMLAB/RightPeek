@@ -3,7 +3,11 @@
 **English** · [فارسی](README.fa.md)
 
 Select text in any app, press a shortcut, and read it with correct
-right-to-left layout.
+right-to-left layout. For Windows, Linux and macOS.
+
+Persian, Arabic and Hebrew text that other apps show scrambled, especially
+when it is mixed with English words, numbers and parentheses, opens in a
+clean viewer laid out the way it should be.
 
 ## Features
 
@@ -167,6 +171,18 @@ npm ci
 npm run tauri build
 ```
 
-Packages are written to `src-tauri/target/release/bundle/`. The design is in
-[`docs/PLAN.md`](docs/PLAN.md) and the release process in
-[`docs/release.md`](docs/release.md).
+Packages are written to `src-tauri/target/release/bundle/`.
+
+## Documentation
+
+- [Design](docs/design.md): goals, budgets, architecture, how each platform
+  reads the selection, and the RTL rules of the viewer.
+- [Development](docs/development.md): building, checks, test scripts and
+  platform notes.
+- [Capture matrix](docs/capture-matrix.md): results per app and platform.
+- [Budgets](docs/budgets.md): measured memory, speed and size.
+- [Release process](docs/release.md).
+
+## License
+
+[MIT](LICENSE) © Aydin Kazemi

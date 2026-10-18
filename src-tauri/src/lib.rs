@@ -1,5 +1,5 @@
 //! App wiring only. Logic lives in `core`, OS calls in `platform`, app
-//! behaviour in `app` (docs/PLAN.md §3).
+//! behaviour in `app` (docs/design.md).
 
 mod app;
 pub mod core;

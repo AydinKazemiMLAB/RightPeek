@@ -1,4 +1,4 @@
-; Installer hooks for the Tauri NSIS template (docs/PLAN.md Phase 4).
+; Installer hooks for the Tauri NSIS template (docs/release.md).
 
 ; On a real uninstall (not when an update reinstalls):
 ; - "Start RightPeek when you sign in" (app::autostart) writes a per-user Run entry
