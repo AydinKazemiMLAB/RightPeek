@@ -25,3 +25,6 @@ dist-ssr
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Internal working docs (plan, agent notes): kept locally, not published.
+/docs/internal/

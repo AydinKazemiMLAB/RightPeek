@@ -1,4 +1,4 @@
-//! Viewer window: created on demand and destroyed on close (docs/PLAN.md §3).
+//! Viewer window: created on demand and destroyed on close (docs/design.md).
 //! The page pulls its content with `take_pending_text` (no push race).
 
 use std::io::Write;
