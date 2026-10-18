@@ -1,4 +1,4 @@
-// Viewer page (docs/PLAN.md §5): pulls captured text from Rust and renders
+// Viewer page (docs/design.md, Viewer): pulls captured text from Rust and renders
 // one <p> per paragraph with its own direction.
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";

@@ -7,8 +7,8 @@ description: Use when implementing, debugging, or reviewing RightPeek's Windows 
 
 ## Overview
 Read the focused app's selection without the user noticing: UI Automation first,
-simulated Ctrl+C second, clipboard always restored. Source spec: docs/PLAN.md §4.
-PLAN.md wins over this file if they ever disagree.
+simulated Ctrl+C second, clipboard always restored. Source spec: docs/design.md ("Capture per platform", Windows).
+design.md wins over this file if they ever disagree.
 
 ## Contract
 Implement `core::capture::SelectionProvider` in `platform/windows.rs`:

@@ -1,5 +1,5 @@
 //! Windows capture backend: UI Automation first, clipboard fallback second.
-//! Follows docs/PLAN.md §4 and the `windows-text-capture` skill.
+//! Follows docs/design.md and the `windows-text-capture` skill.
 
 use std::ffi::c_void;
 use std::thread;

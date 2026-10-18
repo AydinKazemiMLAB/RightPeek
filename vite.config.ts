@@ -7,7 +7,7 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  // Frontend sources (index.html, main.ts, styles.css) live in src/ (docs/PLAN.md §3).
+  // Frontend sources (index.html, main.ts, styles.css) live in src/ (docs/design.md).
   root: "src",
   build: {
     outDir: "../dist",

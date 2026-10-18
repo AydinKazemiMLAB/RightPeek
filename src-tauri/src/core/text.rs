@@ -1,4 +1,4 @@
-//! Text preparation for the viewer (docs/PLAN.md §5): normalization,
+//! Text preparation for the viewer (docs/design.md, Viewer): normalization,
 //! paragraph split, and per-paragraph direction.
 
 use serde::Serialize;

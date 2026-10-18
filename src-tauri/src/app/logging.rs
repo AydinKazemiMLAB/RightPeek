@@ -1,4 +1,4 @@
-//! Rotating log file (docs/PLAN.md Phase 3): off by default in release,
+//! Rotating log file: off by default in release,
 //! toggled in Settings. Logs events and errors, never the captured text.
 
 use std::fs::{self, File, OpenOptions};
