@@ -13,7 +13,7 @@ use tauri_plugin_window_state::{AppHandleExt as _, StateFlags};
 
 use super::{AppState, lock, logging, settings};
 use crate::core::capture::CaptureError;
-use crate::core::settings::clamp_font_size;
+use crate::core::settings::{Theme, clamp_font_size};
 use crate::core::text::{Paragraph, normalize, paragraphs};
 
 pub const LABEL: &str = "viewer";
@@ -74,6 +74,7 @@ pub struct ViewerPayload {
     content: ViewerContent,
     font_size: u8,
     justify: bool,
+    theme: Theme,
 }
 
 /// Shows `content` in the viewer, creating the window if needed.
@@ -104,8 +105,10 @@ fn reveal(window: &WebviewWindow) {
 /// Builds the viewer hidden; the window-state plugin restores its size and
 /// position before it is first shown.
 fn build(app: &AppHandle) -> Option<WebviewWindow> {
+    let theme = lock(&app.state::<AppState>().settings).theme;
     let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("index.html".into()))
         .title("RightPeek")
+        .theme(settings::native_theme(theme))
         .inner_size(560.0, 420.0)
         .min_inner_size(320.0, 200.0)
         .center()
@@ -158,7 +161,16 @@ pub fn take_pending_text(state: State<'_, AppState>) -> ViewerPayload {
         content,
         font_size: settings.font_size,
         justify: settings.justify,
+        theme: settings.theme,
     }
+}
+
+/// Text edited in the viewer, prepared like a capture (normalized, split,
+/// directions detected). The edit stays in the window; "Show last" keeps
+/// the capture.
+#[tauri::command]
+pub fn prepare_text(text: String) -> ViewerContent {
+    ViewerContent::from_text(&text)
 }
 
 /// Called by the page once the text is rendered; records the latency.

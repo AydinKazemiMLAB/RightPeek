@@ -26,6 +26,7 @@ pub struct Settings {
     pub logging: bool,
     /// Justify viewer paragraphs (both edges aligned) instead of ragged.
     pub justify: bool,
+    pub theme: Theme,
     /// Open Settings when launched by hand, so a first run is noticed.
     pub show_settings_on_start: bool,
 }
@@ -38,9 +39,23 @@ impl Default for Settings {
             font_size: DEFAULT_FONT_SIZE,
             logging: cfg!(debug_assertions),
             justify: false,
+            theme: Theme::System,
             show_settings_on_start: true,
         }
     }
+}
+
+/// Window colors: follow the system, or force light or dark.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Theme {
+    Light,
+    Dark,
+    /// Also the fallback for an unknown stored value, so one bad field does
+    /// not reset every setting (serde requires `other` on the last variant).
+    #[default]
+    #[serde(other)]
+    System,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -263,10 +278,26 @@ mod tests {
         assert!(!settings.autostart);
         assert_eq!(settings.font_size, DEFAULT_FONT_SIZE);
         assert!(!settings.justify, "ragged edges are the default");
+        assert_eq!(settings.theme, Theme::System);
         assert!(
             settings.show_settings_on_start,
             "a first launch must show that the app is running"
         );
+    }
+
+    #[test]
+    fn theme_is_stored_as_a_lowercase_name() {
+        assert_eq!(serde_json::to_value(Theme::Dark).unwrap(), "dark");
+        assert_eq!(serde_json::to_value(Theme::Light).unwrap(), "light");
+        assert_eq!(serde_json::to_value(Theme::System).unwrap(), "system");
+    }
+
+    #[test]
+    fn unknown_theme_falls_back_to_system_and_keeps_other_fields() {
+        let settings: Settings =
+            serde_json::from_str(r#"{"theme":"sepia","fontSize":24}"#).unwrap();
+        assert_eq!(settings.theme, Theme::System);
+        assert_eq!(settings.font_size, 24);
     }
 
     #[test]
@@ -324,11 +355,13 @@ mod tests {
             font_size: 22,
             logging: true,
             justify: true,
+            theme: Theme::Dark,
             show_settings_on_start: false,
         };
         let json = serde_json::to_value(&settings).unwrap();
         assert_eq!(json["fontSize"], 22);
         assert_eq!(json["justify"], true);
+        assert_eq!(json["theme"], "dark");
         assert_eq!(json["showSettingsOnStart"], false);
         assert_eq!(serde_json::from_value::<Settings>(json).unwrap(), settings);
     }
