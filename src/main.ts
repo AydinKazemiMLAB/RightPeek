@@ -10,6 +10,8 @@ type Direction = "rtl" | "ltr" | "auto";
 interface Paragraph {
   text: string;
   dir: Direction;
+  /** UTF-16 ranges of numbers that belong to the text after them (core::text). */
+  numbers: [number, number][];
 }
 
 type ViewerContent =
@@ -72,12 +74,27 @@ function render(content: ViewerContent): void {
     if (paragraph.text === "") {
       element.className = "gap";
     } else {
-      element.textContent = paragraph.text;
+      fillParagraph(element, paragraph);
       element.dataset.dir = paragraph.dir;
     }
     viewer.append(element);
   }
   applyDirection();
+}
+
+// Detached numbers get a span that styles.css isolates in RTL paragraphs, so
+// "CPU، ۲ گیگابایت" keeps the number with the Persian text. No characters
+// are added: Copy and selections stay clean.
+function fillParagraph(element: HTMLElement, paragraph: Paragraph): void {
+  let at = 0;
+  for (const [start, end] of paragraph.numbers) {
+    const number = document.createElement("span");
+    number.className = "num";
+    number.textContent = paragraph.text.slice(start, end);
+    element.append(paragraph.text.slice(at, start), number);
+    at = end;
+  }
+  element.append(paragraph.text.slice(at));
 }
 
 function applyDirection(): void {

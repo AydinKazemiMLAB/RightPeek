@@ -16,7 +16,8 @@ clean viewer laid out the way it should be.
   right-click menu: **Services → Show in RightPeek**.
 - **Correct direction per paragraph.** Each paragraph is laid out right-to-left
   or left-to-right by the majority of its words, so a Persian paragraph that
-  starts with an English term still reads correctly.
+  starts with an English term still reads correctly. A number right after an
+  English word stays with the Persian text it belongs to ("CPU، ۲ گیگابایت").
 - **Faithful text.** The zero-width non-joiner (نیم‌فاصله) is kept; Arabic
   presentation forms copied from PDFs are turned back into normal letters.
 - **Viewer tools.** Copy, simple editing of the text (Edit; Esc when done),
