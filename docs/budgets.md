@@ -104,7 +104,7 @@ WSLg is not representative for memory; re-measure on a real Linux desktop.
 
 WebKitGTK runs the page in separate processes like WebView2; on WSLg they also
 carry the software GL stack. The memory misses are open: decide Linux budgets
-after measuring on a real desktop.
+after measuring on a real desktop (done on 2026-10-20, see below: both met).
 
 ## Phase 6 — macOS (2026-10-17)
 
@@ -155,3 +155,33 @@ Notes:
 - With the viewer and Settings both open the tree used 117–121 MB: the
   second window costs about 30 MB until it is closed (unchanged by this
   feature; Settings existed before).
+
+## Linux desktop — Ubuntu 24.04 in VMware (2026-10-20)
+
+Release `.deb` of 0.3.0 (from the release workflow) on Ubuntu 24.04 LTS,
+GNOME on Wayland, VMware Workstation guest (4 vCPU, 4.8 GB RAM, `vmwgfx`,
+WebKitGTK 2.44.0). Memory is `Private_Clean + Private_Dirty` from
+`/proc/<pid>/smaps_rollup`, as in Phase 5. Captures are requested with
+`rightpeek --show` after `wl-copy --primary` sets a Persian sentence.
+These figures replace the WSLg ones above for memory.
+
+| Metric | Target | Run 1 | Run 2 | Run 3 | Status |
+|---|---|---|---|---|---|
+| Idle RAM, no window (app process) | ≤ 20 MB | 16.9 MB | 16.8 MB | 16.9 MB | ✅ |
+| RAM with viewer open (app + WebKit processes) | ≤ 120 MB | 112.5 MB | 111.9 MB | 112.1 MB | ✅ |
+| Capture (`--show` → text read) | — | 38 ms | 44 ms | 107 ms | — |
+| CPU while idle | ~0% | 1.3% | 1.5% | 1.2% | ❌ |
+
+Notes:
+- Viewer open: app ~40–41 MB, `WebKitWebProcess` ~63 MB,
+  `WebKitNetworkProcess` ~8.5 MB.
+- Idle CPU comes from one thread: the X11 backend of the `global-hotkey`
+  crate (used by the global-shortcut plugin) polls for key events every
+  50 ms (`std::thread::sleep(50 ms)` in its event loop, still so upstream in
+  0.9). About 20 wake-ups per second; the cost is inflated in a VM. Windows
+  and macOS are not affected (both block on OS events).
+- Checked by hand in the same session: Settings shows no macOS
+  Accessibility section and shows the Wayland hint; the theme switch reaches
+  an open viewer; Edit and Esc work; numbers after a Latin word stay with the
+  Persian text; Ctrl+Shift+Space captures while an X11 (Xwayland) window has
+  focus.
