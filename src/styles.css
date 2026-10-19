@@ -177,6 +177,13 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* A number that belongs to the RTL text after it (core::text::detached_numbers).
+   Isolated only in RTL paragraphs, so forcing LTR turns it off. */
+.viewer p[dir="rtl"] .num {
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
 .viewer.justify > p {
   text-align: justify;
 }
