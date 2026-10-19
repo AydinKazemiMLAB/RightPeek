@@ -19,6 +19,8 @@ pub enum Direction {
 pub struct Paragraph {
     pub text: String,
     pub dir: Direction,
+    /// [`detached_numbers`] of `text`; an RTL paragraph isolates them.
+    pub numbers: Vec<(usize, usize)>,
 }
 
 /// Cleans captured text: CRLF/CR -> LF, Arabic presentation forms -> base
@@ -60,12 +62,14 @@ pub fn paragraphs(text: &str) -> Vec<Paragraph> {
                 result.push(Paragraph {
                     text: String::new(),
                     dir: Direction::Auto,
+                    numbers: Vec::new(),
                 });
             }
         } else {
             result.push(Paragraph {
                 text: line.to_owned(),
                 dir: detect_direction(line),
+                numbers: detached_numbers(line),
             });
         }
     }
@@ -108,6 +112,87 @@ fn direction_from_counts(rtl: usize, ltr: usize) -> Direction {
         (0, 0) => Direction::Auto,
         _ if rtl >= ltr => Direction::Rtl,
         _ => Direction::Ltr,
+    }
+}
+
+/// Number runs that the bidi algorithm would glue to the Latin word before
+/// them although they belong to the text after them: "CPU، ۲ گیگابایت" reads
+/// "۲ ،CPU گیگابایت" in an RTL paragraph, because a European number takes
+/// the direction of the previous strong character (UAX #9, rule W7). A run
+/// is detached when punctuation separates it from that Latin word and no
+/// Latin text follows it; "Windows 11" (only a space) and "CPU, 2 GB" (Latin
+/// after) stay as they are. Ranges are UTF-16 offsets, as the viewer's
+/// JavaScript indexes strings.
+pub fn detached_numbers(text: &str) -> Vec<(usize, usize)> {
+    let chars: Vec<char> = text.chars().collect();
+    let mut offsets = Vec::with_capacity(chars.len() + 1);
+    let mut offset = 0;
+    for c in &chars {
+        offsets.push(offset);
+        offset += c.len_utf16();
+    }
+    offsets.push(offset);
+
+    let mut result = Vec::new();
+    let mut previous_strong = None;
+    let mut punctuation_since_strong = false;
+    let mut i = 0;
+    while i < chars.len() {
+        if is_european_digit(chars[i]) {
+            let end = number_run_end(&chars, i);
+            let after_latin = previous_strong == Some(Direction::Ltr) && punctuation_since_strong;
+            let next_strong = chars[end..].iter().find_map(|&c| strong_direction(c));
+            if after_latin && next_strong != Some(Direction::Ltr) {
+                result.push((offsets[i], offsets[end]));
+            }
+            i = end;
+            continue;
+        }
+        if let Some(direction) = strong_direction(chars[i]) {
+            previous_strong = Some(direction);
+            punctuation_since_strong = false;
+        } else if !chars[i].is_whitespace() {
+            punctuation_since_strong = true;
+        }
+        i += 1;
+    }
+    result
+}
+
+/// Digits the bidi algorithm treats as European numbers: ASCII and Persian
+/// (Extended Arabic-Indic). Arabic-Indic digits (U+0660..0669) are Arabic
+/// numbers and are never attached to Latin text.
+fn is_european_digit(c: char) -> bool {
+    c.is_ascii_digit() || ('\u{06F0}'..='\u{06F9}').contains(&c)
+}
+
+/// End (exclusive) of the number starting at `start`: digits, and a single
+/// separator between digits ("3.12", "1,000", "10:30", "۱۲٫۵").
+fn number_run_end(chars: &[char], start: usize) -> usize {
+    let mut end = start;
+    loop {
+        while end < chars.len() && is_european_digit(chars[end]) {
+            end += 1;
+        }
+        let separated_digit = chars
+            .get(end)
+            .is_some_and(|&c| matches!(c, '.' | ',' | ':' | '/' | '٫' | '٬'))
+            && chars.get(end + 1).is_some_and(|&c| is_european_digit(c));
+        if !separated_digit {
+            return end;
+        }
+        end += 1;
+    }
+}
+
+/// Bidi strength of a character: letters and the directional marks.
+fn strong_direction(c: char) -> Option<Direction> {
+    match c {
+        '\u{200F}' | '\u{061C}' => Some(Direction::Rtl),
+        '\u{200E}' => Some(Direction::Ltr),
+        _ if c.is_alphabetic() && is_rtl_letter(c) => Some(Direction::Rtl),
+        _ if c.is_alphabetic() => Some(Direction::Ltr),
+        _ => None,
     }
 }
 
@@ -290,5 +375,72 @@ mod tests {
     #[test]
     fn direction_of_presentation_forms_is_rtl() {
         assert_eq!(detect_direction("\u{FEFB}"), Direction::Rtl);
+    }
+
+    // --- detached_numbers -----------------------------------------------
+
+    /// The runs `detached_numbers` marks, as strings.
+    fn detached(text: &str) -> Vec<String> {
+        let units: Vec<u16> = text.encode_utf16().collect();
+        detached_numbers(text)
+            .into_iter()
+            .map(|(start, end)| String::from_utf16(&units[start..end]).unwrap())
+            .collect()
+    }
+
+    #[test]
+    fn numbers_after_a_latin_word_and_a_comma_are_detached() {
+        let text = "۲ هسته‌ی CPU، ۲ گیگابایت RAM، ۲۰ گیگابایت";
+        assert_eq!(detached(text), ["۲", "۲۰"]);
+        // The second "۲" (after "CPU، "), not the first one, in UTF-16 units.
+        let after_cpu = text.find("CPU، ").unwrap() + "CPU، ".len();
+        let start = text[..after_cpu].encode_utf16().count();
+        assert_eq!(detached_numbers(text)[0], (start, start + 1));
+    }
+
+    #[test]
+    fn ascii_digits_after_a_latin_comma_are_detached() {
+        assert_eq!(detached("حافظه: RAM, 16 گیگابایت"), ["16"]);
+    }
+
+    #[test]
+    fn a_number_at_the_end_after_latin_punctuation_is_detached_whole() {
+        assert_eq!(detached("نسخه‌ی مورد نیاز Python: 3.12"), ["3.12"]);
+    }
+
+    #[test]
+    fn version_numbers_stay_with_their_latin_word() {
+        assert!(detached("نسخه‌ی Windows 11 و Python ۳ را نصب کنید").is_empty());
+    }
+
+    #[test]
+    fn numbers_followed_by_latin_text_stay() {
+        assert!(detached("مشخصات CPU, 2 GB است").is_empty());
+    }
+
+    #[test]
+    fn numbers_after_rtl_text_are_left_alone() {
+        assert!(detached("ساعت 10:30 است").is_empty());
+        assert!(detached("در سال ۱۴۰۳، ۲ بار").is_empty());
+    }
+
+    #[test]
+    fn arabic_indic_digits_are_left_alone() {
+        // U+0660..0669 are Arabic numbers to the bidi algorithm; rule W7
+        // does not attach them to Latin text.
+        assert!(detached("CPU، ٢ گیگابایت").is_empty());
+    }
+
+    #[test]
+    fn an_existing_right_to_left_mark_already_detaches() {
+        assert!(detached("CPU، \u{200F}۲ گیگابایت").is_empty());
+    }
+
+    #[test]
+    fn paragraphs_carry_their_detached_numbers() {
+        let paragraphs = paragraphs("RAM، ۲۰ گیگابایت\nWindows 11");
+        assert_eq!(paragraphs[0].numbers, detached_numbers("RAM، ۲۰ گیگابایت"));
+        assert!(!paragraphs[0].numbers.is_empty());
+        assert!(paragraphs[1].numbers.is_empty());
     }
 }

@@ -118,6 +118,14 @@ Per-app results: [`capture-matrix.md`](capture-matrix.md).
   Persian technical text often starts with a Latin term.
 - CSS: `unicode-bidi: isolate` per paragraph, `text-align: start`, page
   default `dir="rtl"`.
+- Numbers after a Latin word: the bidi algorithm glues a European number
+  (ASCII or Persian digits) to the previous strong character (UAX #9, rule
+  W7), so "CPU، ۲ گیگابایت" reads "۲ ،CPU گیگابایت" in an RTL paragraph.
+  `core::text::detached_numbers` marks runs separated from the Latin word by
+  punctuation and not followed by Latin text; the viewer wraps each in a
+  span that is an RTL isolate inside RTL paragraphs only. "Windows 11"
+  (space only) and "CPU, 2 GB" (Latin after) are left alone. No characters
+  are inserted, so Copy and selections stay clean.
 - Bundled **Vazirmatn** font (Latin and Arabic subsets); no network fonts.
 - Normalization: CRLF → LF; zero-width characters removed except the ZWNJ
   (U+200C, needed in Persian); trailing spaces trimmed; Arabic presentation
