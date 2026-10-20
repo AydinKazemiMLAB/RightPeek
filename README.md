@@ -29,7 +29,7 @@ clean viewer laid out the way it should be.
   read through Accessibility; elsewhere RightPeek copies and then restores
   the clipboard.
 - **Light.** Lives in the tray (the menu bar on macOS), uses almost no CPU
-  while idle, and opens the viewer only when needed. Downloads are under 4 MB.
+  while idle, and opens the viewer only when needed. Downloads are under 5 MB.
 - **Private.** No network access, no telemetry. Captured text is never written
   to disk or logs.
 
