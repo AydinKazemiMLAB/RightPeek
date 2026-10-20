@@ -28,3 +28,6 @@ dist-ssr
 
 # Internal working docs (plan, agent notes): kept locally, not published.
 /docs/internal/
+
+# Release files downloaded from the Release workflow (attached to GitHub releases by hand).
+/release-files/
