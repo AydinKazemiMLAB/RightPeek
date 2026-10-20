@@ -9,6 +9,9 @@ mod linux;
 mod macos;
 #[cfg(windows)]
 mod windows;
+/// The Linux global hotkey (X11 key grab without polling).
+#[cfg(target_os = "linux")]
+pub mod x11_hotkey;
 
 /// Returns the capture backend for the current OS.
 pub fn selection_provider() -> Box<dyn SelectionProvider + Send + Sync> {
