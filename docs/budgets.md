@@ -170,7 +170,8 @@ These figures replace the WSLg ones above for memory.
 | Idle RAM, no window (app process) | ≤ 20 MB | 16.9 MB | 16.8 MB | 16.9 MB | ✅ |
 | RAM with viewer open (app + WebKit processes) | ≤ 120 MB | 112.5 MB | 111.9 MB | 112.1 MB | ✅ |
 | Capture (`--show` → text read) | — | 38 ms | 44 ms | 107 ms | — |
-| CPU while idle | ~0% | 1.3% | 1.5% | 1.2% | ❌ |
+| CPU while idle (0.3.0) | ~0% | 1.3% | 1.5% | 1.2% | ❌ |
+| CPU while idle (X11 hotkey, PR #22) | ~0% | 0.02% | 0.02% | — | ✅ |
 
 Notes:
 - Viewer open: app ~40–41 MB, `WebKitWebProcess` ~63 MB,
@@ -179,7 +180,13 @@ Notes:
   crate (used by the global-shortcut plugin) polls for key events every
   50 ms (`std::thread::sleep(50 ms)` in its event loop, still so upstream in
   0.9). About 20 wake-ups per second; the cost is inflated in a VM. Windows
-  and macOS are not affected (both block on OS events).
+  and macOS are not affected (both block on OS events). Fixed on Linux by
+  grabbing the hotkey ourselves (`platform::x11_hotkey`, blocking on X
+  events): 1 tick of CPU time in 60 s idle, the hotkey thread 0 ticks;
+  idle RAM unchanged (16.8–16.9 MB). Checked on the VM: a press captures
+  once, a 2 s hold captures once, Caps Lock and Num Lock on still capture,
+  changing the hotkey in Settings releases the old combination and grabs
+  the new one.
 - Checked by hand in the same session: Settings shows no macOS
   Accessibility section and shows the Wayland hint; the theme switch reaches
   an open viewer; Edit and Esc work; numbers after a Latin word stay with the
