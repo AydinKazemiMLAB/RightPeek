@@ -116,10 +116,12 @@ pub struct SettingsView {
     log_dir: Option<String>,
     /// Command for a desktop shortcut where global hotkeys are limited.
     show_command: Option<String>,
+    /// Who holds the shortcut when it is not RightPeek (Linux desktops).
+    hotkey_note: Option<String>,
 }
 
 /// `"<this exe>" --show`, for a desktop keyboard shortcut.
-fn show_command() -> Option<String> {
+pub fn show_command() -> Option<String> {
     let exe = std::env::current_exe().ok()?;
     Some(format!("\"{}\" {SHOW_ARG}", exe.display()))
 }
@@ -133,9 +135,10 @@ pub fn get_settings(state: State<'_, AppState>) -> SettingsView {
         settings,
         hotkey_error: lock(&state.hotkey_error).clone(),
         log_dir: logging::dir().map(|dir| dir.display().to_string()),
-        show_command: platform::global_hotkey_is_limited()
+        show_command: hotkey::needs_desktop_shortcut()
             .then(show_command)
             .flatten(),
+        hotkey_note: hotkey::note(),
     }
 }
 
