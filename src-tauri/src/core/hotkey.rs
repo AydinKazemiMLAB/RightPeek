@@ -1,6 +1,7 @@
-//! What the Linux X11 hotkey listener grabs: a canonical hotkey
-//! (`core::settings::normalize_hotkey`) as an X11 keysym and modifier mask.
-//! Pure data, so it is tested on every OS (docs/design.md, Hotkey).
+//! A canonical hotkey (`core::settings::normalize_hotkey`) in the forms the
+//! Linux backends need: an X11 keysym and modifier mask (key grab), a GNOME
+//! custom-shortcut binding and an XDG GlobalShortcuts trigger. Pure data, so
+//! it is tested on every OS (docs/design.md, Linux).
 
 use super::settings::{HotkeyError, normalize_hotkey};
 
@@ -108,9 +109,234 @@ pub fn x11_keysym(key: &str) -> Option<u32> {
     Some(keysym)
 }
 
+/// Path of RightPeek's entry among GNOME's custom keyboard shortcuts.
+pub const GNOME_SHORTCUT_PATH: &str =
+    "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/rightpeek/";
+
+/// The xkb keysym name of a canonical key name, as GNOME bindings and XDG
+/// shortcut triggers spell keys.
+pub fn xkb_key_name(key: &str) -> Option<String> {
+    let mut chars = key.chars();
+    if let (Some(c), None) = (chars.next(), chars.next())
+        && c.is_ascii_alphanumeric()
+    {
+        return Some(c.to_ascii_lowercase().to_string());
+    }
+    if let Some(number) = key.strip_prefix('F').and_then(|n| n.parse::<u8>().ok())
+        && (1..=24).contains(&number)
+    {
+        return Some(key.to_owned());
+    }
+    let name = match key {
+        "Space" => "space",
+        "Enter" => "Return",
+        "Tab" => "Tab",
+        "Escape" => "Escape",
+        "Backspace" => "BackSpace",
+        "Delete" => "Delete",
+        "Insert" => "Insert",
+        "Home" => "Home",
+        "End" => "End",
+        "PageUp" => "Page_Up",
+        "PageDown" => "Page_Down",
+        "ArrowUp" => "Up",
+        "ArrowDown" => "Down",
+        "ArrowLeft" => "Left",
+        "ArrowRight" => "Right",
+        "Comma" => "comma",
+        "Period" => "period",
+        "Slash" => "slash",
+        "Backslash" => "backslash",
+        "Backquote" => "grave",
+        "Minus" => "minus",
+        "Equal" => "equal",
+        "Semicolon" => "semicolon",
+        "Quote" => "apostrophe",
+        "BracketLeft" => "bracketleft",
+        "BracketRight" => "bracketright",
+        _ => return None,
+    };
+    Some(name.to_owned())
+}
+
+/// Splits a hotkey into modifier flags (Ctrl, Alt, Shift, Super) and the
+/// xkb name of its key.
+fn xkb_parts(hotkey: &str) -> Result<([bool; 4], String), HotkeyError> {
+    let canonical = normalize_hotkey(hotkey)?;
+    let mut modifiers = [false; 4];
+    let mut key = None;
+    for token in canonical.split('+') {
+        match token {
+            "Ctrl" => modifiers[0] = true,
+            "Alt" => modifiers[1] = true,
+            "Shift" => modifiers[2] = true,
+            "Super" => modifiers[3] = true,
+            name => {
+                key = Some(
+                    xkb_key_name(name).ok_or_else(|| HotkeyError::UnknownToken(name.to_owned()))?,
+                )
+            }
+        }
+    }
+    Ok((modifiers, key.ok_or(HotkeyError::NoKey)?))
+}
+
+/// Joins the names of the set modifiers, then the key.
+fn join_parts(modifiers: [bool; 4], names: [&str; 4], key: &str, separator: &str) -> String {
+    let mut parts: Vec<&str> = names
+        .iter()
+        .zip(modifiers)
+        .filter_map(|(name, on)| on.then_some(*name))
+        .collect();
+    parts.push(key);
+    parts.join(separator)
+}
+
+/// A GNOME keybinding such as `<Control><Shift>space`.
+pub fn gnome_binding(hotkey: &str) -> Result<String, HotkeyError> {
+    let (modifiers, key) = xkb_parts(hotkey)?;
+    let names = ["<Control>", "<Alt>", "<Shift>", "<Super>"];
+    Ok(join_parts(modifiers, names, &key, ""))
+}
+
+/// An XDG shortcut trigger such as `CTRL+SHIFT+space` (GlobalShortcuts
+/// portal, `preferred_trigger`).
+pub fn portal_trigger(hotkey: &str) -> Result<String, HotkeyError> {
+    let (modifiers, key) = xkb_parts(hotkey)?;
+    let names = ["CTRL", "ALT", "SHIFT", "LOGO"];
+    Ok(join_parts(modifiers, names, &key, "+"))
+}
+
+/// Whether `XDG_CURRENT_DESKTOP` (a colon-separated list) names GNOME.
+pub fn is_gnome(current_desktop: &str) -> bool {
+    current_desktop
+        .split(':')
+        .any(|desktop| desktop.eq_ignore_ascii_case("gnome"))
+}
+
+/// A string in GVariant text form, as `gsettings set` expects it.
+pub fn gvariant_string(value: &str) -> String {
+    let escaped = value.replace('\\', "\\\\").replace('\'', "\\'");
+    format!("'{escaped}'")
+}
+
+/// `list` (a GVariant string array as `gsettings get` prints it) with `path`
+/// appended; `None` if it is already there or `list` cannot be read.
+pub fn with_path_added(list: &str, path: &str) -> Option<String> {
+    let inner = list
+        .trim()
+        .trim_start_matches("@as")
+        .trim()
+        .strip_prefix('[')?
+        .strip_suffix(']')?;
+    let mut items: Vec<String> = inner
+        .split(',')
+        .map(|item| item.trim().trim_matches('\'').to_owned())
+        .filter(|item| !item.is_empty())
+        .collect();
+    if items.iter().any(|item| item == path) {
+        return None;
+    }
+    items.push(path.to_owned());
+    let quoted: Vec<String> = items.iter().map(|item| gvariant_string(item)).collect();
+    Some(format!("[{}]", quoted.join(", ")))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gnome_binding_uses_angle_bracket_modifiers_and_keysym_names() {
+        assert_eq!(
+            gnome_binding("Ctrl+Shift+Space").unwrap(),
+            "<Control><Shift>space"
+        );
+        assert_eq!(gnome_binding("Ctrl+Alt+R").unwrap(), "<Control><Alt>r");
+        assert_eq!(gnome_binding("Super+PageDown").unwrap(), "<Super>Page_Down");
+        assert_eq!(gnome_binding("Alt+Shift+F5").unwrap(), "<Alt><Shift>F5");
+    }
+
+    #[test]
+    fn portal_trigger_uses_xdg_modifier_names() {
+        assert_eq!(
+            portal_trigger("Ctrl+Shift+Space").unwrap(),
+            "CTRL+SHIFT+space"
+        );
+        assert_eq!(portal_trigger("alt+win+1").unwrap(), "ALT+LOGO+1");
+        assert_eq!(portal_trigger("Ctrl+Quote").unwrap(), "CTRL+apostrophe");
+    }
+
+    #[test]
+    fn every_named_key_has_an_xkb_name() {
+        for key in [
+            "Space",
+            "Enter",
+            "Tab",
+            "Escape",
+            "Backspace",
+            "Delete",
+            "Insert",
+            "Home",
+            "End",
+            "PageUp",
+            "PageDown",
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "Comma",
+            "Period",
+            "Slash",
+            "Backslash",
+            "Backquote",
+            "Minus",
+            "Equal",
+            "Semicolon",
+            "Quote",
+            "BracketLeft",
+            "BracketRight",
+        ] {
+            assert!(gnome_binding(&format!("Ctrl+{key}")).is_ok(), "{key}");
+        }
+    }
+
+    #[test]
+    fn xkb_bindings_reject_invalid_hotkeys() {
+        assert_eq!(gnome_binding("Space"), Err(HotkeyError::NoModifier));
+        assert_eq!(portal_trigger("Ctrl"), Err(HotkeyError::NoKey));
+    }
+
+    #[test]
+    fn gnome_is_found_in_the_desktop_list() {
+        assert!(is_gnome("ubuntu:GNOME"));
+        assert!(is_gnome("GNOME"));
+        assert!(!is_gnome("KDE"));
+        assert!(!is_gnome("X-Cinnamon"));
+        assert!(!is_gnome(""));
+    }
+
+    #[test]
+    fn gvariant_strings_are_quoted_and_escaped() {
+        assert_eq!(gvariant_string("RightPeek"), "'RightPeek'");
+        assert_eq!(
+            gvariant_string(r#""/opt/it's" --show"#),
+            r#"'"/opt/it\'s" --show'"#
+        );
+        assert_eq!(gvariant_string(r"a\b"), r"'a\\b'");
+    }
+
+    #[test]
+    fn our_path_is_appended_to_the_custom_shortcut_list() {
+        let path = GNOME_SHORTCUT_PATH;
+        assert_eq!(with_path_added("@as []", path), Some(format!("['{path}']")));
+        assert_eq!(
+            with_path_added("['/a/', '/b/']", path),
+            Some(format!("['/a/', '/b/', '{path}']"))
+        );
+        assert_eq!(with_path_added(&format!("['/a/', '{path}']"), path), None);
+        assert_eq!(with_path_added("garbage", path), None);
+    }
 
     #[test]
     fn default_hotkey_is_ctrl_shift_space() {

@@ -3,13 +3,18 @@
 
 use crate::core::capture::SelectionProvider;
 
+/// The Linux global hotkey: GNOME custom shortcut, GlobalShortcuts portal
+/// or X11 key grab (app::hotkey_linux picks one).
+#[cfg(target_os = "linux")]
+pub mod gnome_shortcut;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(target_os = "linux")]
+pub mod portal_shortcut;
 #[cfg(windows)]
 mod windows;
-/// The Linux global hotkey (X11 key grab without polling).
 #[cfg(target_os = "linux")]
 pub mod x11_hotkey;
 
@@ -129,13 +134,6 @@ pub fn clipboard_text() -> Option<String> {
     {
         None
     }
-}
-
-/// Whether the global hotkey misses keys pressed in some apps: on Wayland it
-/// only fires while an X11 (XWayland) window has focus, so users need a
-/// desktop shortcut running `rightpeek --show` instead.
-pub fn global_hotkey_is_limited() -> bool {
-    cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
 }
 
 /// Runs `job` on a fresh thread and gives up after `timeout`. A job that

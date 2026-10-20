@@ -3014,6 +3014,7 @@ dependencies = [
  "unicode-normalization",
  "windows",
  "x11rb",
+ "zbus",
 ]
 
 [[package]]

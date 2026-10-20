@@ -64,10 +64,10 @@ Measured figures per platform are in [`budgets.md`](budgets.md).
   captures, `--autostart` (the sign-in entry) does nothing, anything else
   opens Settings.
 - **No low-level input hooks** (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`): on Windows
-  and macOS the hotkey uses the Tauri global-shortcut plugin; on Linux
-  `platform::x11_hotkey` grabs it on the X11 root window and blocks on X
-  events (the plugin's X11 backend polls every 50 ms). Tauri capabilities are
-  kept to what each window needs.
+  and macOS the hotkey uses the Tauri global-shortcut plugin; on Linux one
+  of three backends holds it (see Linux below), none of them polling (the
+  plugin's X11 backend polls every 50 ms). Tauri capabilities are kept to
+  what each window needs.
 
 Layout: `src/` (viewer and Settings pages), `src-tauri/src/core/` (pure logic,
 unit-tested), `src-tauri/src/platform/` (OS backends), `src-tauri/src/app/`
@@ -97,11 +97,28 @@ The X11/Wayland **PRIMARY selection** is read directly: no copy is simulated
 and the clipboard is never touched. Wayland compositors without the
 data-control protocol fall back to `wl-paste --primary`.
 
-The hotkey is a passive key grab on the X11 root window (`GrabKey`, also
-with Caps Lock and Num Lock on; XKB detectable auto-repeat so a held key
-captures once), served by a thread that waits for X events. On Wayland it
-goes through Xwayland and only fires while an X11 window has focus, so users
-bind a desktop shortcut to `rightpeek --show`.
+The hotkey is held by exactly one backend, chosen at the first
+registration (`app::hotkey_linux`):
+
+- **Wayland with the XDG GlobalShortcuts portal** (KDE Plasma 5.27+,
+  GNOME 48+; `platform::portal_shortcut`): the desktop owns the key and may
+  ask the user to confirm it; a thread blocks on the portal's `Activated`
+  signal. Each change opens a new portal session.
+- **Wayland on GNOME without the portal** (e.g. Ubuntu 24.04;
+  `platform::gnome_shortcut`): a GNOME custom shortcut, written with
+  `gsettings`, runs `rightpeek --show`. Nothing runs in RightPeek until the
+  key is pressed.
+- **Otherwise** (X11 sessions, or when both of the above fail): a passive
+  key grab on the X11 root window (`platform::x11_hotkey`; `GrabKey`, also
+  with Caps Lock and Num Lock on; XKB detectable auto-repeat so a held key
+  captures once), served by a thread that waits for X events. On Wayland
+  this goes through Xwayland and only fires while an X11 window has focus,
+  so Settings then shows the `rightpeek --show` command for a desktop
+  shortcut.
+
+If the portal refuses the shortcut, the hotkey moves to the GNOME shortcut
+or the X11 grab. On Wayland the X server is never contacted unless both
+Wayland paths fail, because an open X connection keeps Xwayland running.
 
 ### macOS
 
