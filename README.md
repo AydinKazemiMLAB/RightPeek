@@ -116,10 +116,13 @@ running. There you can change the shortcut, pick the theme, start RightPeek
 when you sign in, and choose to start quietly in the tray. Open Settings again from the tray icon
 or from the viewer.
 
-**Wayland (Linux):** global shortcuts only work while an X11 app has focus.
-Add a keyboard shortcut in your desktop settings (GNOME: Settings → Keyboard →
-Custom Shortcuts; KDE: System Settings → Shortcuts) that runs
-`rightpeek --show`. The Settings window shows the exact command.
+**Wayland (Linux):** on KDE Plasma and GNOME 48 or later the desktop manages
+the shortcut and may ask you to confirm it once. On older GNOME (such as
+Ubuntu 24.04) RightPeek adds the shortcut to Settings → Keyboard → Custom
+Shortcuts itself and updates it when you change it. On other Wayland
+desktops the shortcut only works while an X11 app has focus: add a keyboard
+shortcut in your desktop settings that runs `rightpeek --show`. The Settings
+window says which case applies and shows the exact command when you need it.
 
 **macOS:** besides the shortcut, select text, right-click and choose
 **Services → Show in RightPeek**. Apps with their own context menus (VS Code,
@@ -140,7 +143,9 @@ record that text.
   data" to remove settings and logs too.
 - **Linux:** `sudo apt remove right-peek` or `sudo dnf remove right-peek`. This
   also removes the "start when you sign in" entry. Settings and logs stay in
-  `~/.local/share/com.rightpeek.app`; delete that folder to remove them.
+  `~/.local/share/com.rightpeek.app`; delete that folder to remove them. On
+  GNOME, also remove the RightPeek entry from Settings → Keyboard → Custom
+  Shortcuts.
 - **macOS:** turn off "Start RightPeek when you sign in" in Settings, quit
   RightPeek from the menu bar and move it from Applications to the Trash. To
   remove settings and logs too, delete
