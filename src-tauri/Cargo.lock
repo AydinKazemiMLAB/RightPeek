@@ -3013,6 +3013,7 @@ dependencies = [
  "tauri-plugin-window-state",
  "unicode-normalization",
  "windows",
+ "x11rb",
 ]
 
 [[package]]

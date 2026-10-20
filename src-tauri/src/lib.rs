@@ -23,17 +23,20 @@ pub fn run() {
                 .build(),
         )
         .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(app::hotkey::handle)
-                .build(),
-        )
-        .plugin(
             // The settings window is small and fixed; only the viewer is remembered.
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(app::viewer::WINDOW_STATE)
                 .with_denylist(&[app::settings::LABEL])
                 .build(),
         );
+    // Linux grabs the hotkey itself (app::hotkey, platform::x11_hotkey): the
+    // plugin's X11 backend polls.
+    #[cfg(not(target_os = "linux"))]
+    let builder = builder.plugin(
+        tauri_plugin_global_shortcut::Builder::new()
+            .with_handler(app::hotkey::handle)
+            .build(),
+    );
     // Windows writes its sign-in entry itself (app::autostart).
     #[cfg(not(windows))]
     let builder = builder.plugin(tauri_plugin_autostart::init(

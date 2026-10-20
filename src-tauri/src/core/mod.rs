@@ -2,6 +2,7 @@
 //! so every item is unit-testable on any OS (docs/design.md).
 
 pub mod capture;
+pub mod hotkey;
 pub mod log;
 pub mod settings;
 pub mod text;

@@ -63,9 +63,11 @@ Measured figures per platform are in [`budgets.md`](budgets.md).
 - **Second launch** goes through the single-instance plugin: `--show`
   captures, `--autostart` (the sign-in entry) does nothing, anything else
   opens Settings.
-- **No low-level input hooks** (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`): the hotkey
-  uses the Tauri global-shortcut plugin. Tauri capabilities are kept to what
-  each window needs.
+- **No low-level input hooks** (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`): on Windows
+  and macOS the hotkey uses the Tauri global-shortcut plugin; on Linux
+  `platform::x11_hotkey` grabs it on the X11 root window and blocks on X
+  events (the plugin's X11 backend polls every 50 ms). Tauri capabilities are
+  kept to what each window needs.
 
 Layout: `src/` (viewer and Settings pages), `src-tauri/src/core/` (pure logic,
 unit-tested), `src-tauri/src/platform/` (OS backends), `src-tauri/src/app/`
@@ -93,9 +95,13 @@ unit-tested), `src-tauri/src/platform/` (OS backends), `src-tauri/src/app/`
 
 The X11/Wayland **PRIMARY selection** is read directly: no copy is simulated
 and the clipboard is never touched. Wayland compositors without the
-data-control protocol fall back to `wl-paste --primary`. On Wayland, global
-shortcuts only fire while an X11 window has focus, so users bind a desktop
-shortcut to `rightpeek --show`.
+data-control protocol fall back to `wl-paste --primary`.
+
+The hotkey is a passive key grab on the X11 root window (`GrabKey`, also
+with Caps Lock and Num Lock on; XKB detectable auto-repeat so a held key
+captures once), served by a thread that waits for X events. On Wayland it
+goes through Xwayland and only fires while an X11 window has focus, so users
+bind a desktop shortcut to `rightpeek --show`.
 
 ### macOS
 
