@@ -33,15 +33,17 @@ RightPeek یک برنامه‌ی کوچک برای ویندوز، لینوکس �
 
 ## دانلود
 
-فایل‌ها را از صفحه‌ی [Releases](../../releases) بگیرید:
+فایل‌ها را از [آخرین نسخه](../../releases/latest) بگیرید:
 
 | سیستم‌عامل | فایل |
 |---|---|
 | ویندوز ۱۰ و ۱۱، نصب‌کننده | `RightPeek_<version>_x64-setup.exe` |
 | ویندوز، نسخه‌ی پرتابل | `RightPeek_<version>_x64-portable.exe` |
-| دبیان و اوبونتو | `RightPeek_<version>_amd64.deb` |
-| فدورا و openSUSE | `RightPeek-<version>-1.x86_64.rpm` |
+| دبیان، اوبونتو و لینوکس مینت | `RightPeek_<version>_amd64.deb` |
+| فدورا | `RightPeek-<version>-1.x86_64.rpm` |
 | مک‌اواس ۱۱ یا جدیدتر، Apple Silicon (M1 به بعد) | `RightPeek_<version>_aarch64.dmg` |
+
+برای اطمینان از سالم بودن فایل دانلودشده، SHA-256 آن را با فایل `SHA256SUMS.txt` همان نسخه مقایسه کنید: در لینوکس `sha256sum -c SHA256SUMS.txt --ignore-missing`، در مک `shasum -a 256 -c SHA256SUMS.txt --ignore-missing` و در ویندوز در PowerShell دستور `Get-FileHash <file>`.
 
 ## نصب
 

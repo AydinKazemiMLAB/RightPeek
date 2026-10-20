@@ -28,8 +28,8 @@ clean viewer laid out the way it should be.
   read directly and the clipboard is never touched. On macOS most apps are
   read through Accessibility; elsewhere RightPeek copies and then restores
   the clipboard.
-- **Light.** Lives in the tray (the menu bar on macOS), uses no CPU while
-  idle, and opens the viewer only when needed. Downloads are under 4 MB.
+- **Light.** Lives in the tray (the menu bar on macOS), uses almost no CPU
+  while idle, and opens the viewer only when needed. Downloads are under 4 MB.
 - **Private.** No network access, no telemetry. Captured text is never written
   to disk or logs.
 
@@ -45,15 +45,20 @@ RightPeek یک برنامه‌ی کوچک برای ویندوز، لینوکس �
 
 ## Download
 
-Get the files from the [Releases](../../releases) page:
+Get the files from the [latest release](../../releases/latest):
 
 | System | File |
 |---|---|
 | Windows 10 / 11, installer | `RightPeek_<version>_x64-setup.exe` |
 | Windows, portable | `RightPeek_<version>_x64-portable.exe` |
-| Debian / Ubuntu | `RightPeek_<version>_amd64.deb` |
-| Fedora / openSUSE | `RightPeek-<version>-1.x86_64.rpm` |
+| Debian / Ubuntu / Linux Mint | `RightPeek_<version>_amd64.deb` |
+| Fedora | `RightPeek-<version>-1.x86_64.rpm` |
 | macOS 11 or newer, Apple Silicon (M1 and later) | `RightPeek_<version>_aarch64.dmg` |
+
+To check a download, compare its SHA-256 with `SHA256SUMS.txt` from the same
+release: `sha256sum -c SHA256SUMS.txt --ignore-missing` on Linux,
+`shasum -a 256 -c SHA256SUMS.txt --ignore-missing` on macOS, or
+`Get-FileHash <file>` in PowerShell on Windows.
 
 ## Install
 
@@ -113,8 +118,8 @@ works without this permission.
 
 On the first start RightPeek opens its Settings window so you can see it is
 running. There you can change the shortcut, pick the theme, start RightPeek
-when you sign in, and choose to start quietly in the tray. Open Settings again from the tray icon
-or from the viewer.
+when you sign in, and choose to start quietly in the tray. Open Settings
+again from the tray icon or from the viewer.
 
 **Wayland (Linux):** on KDE Plasma and GNOME 48 or later the desktop manages
 the shortcut and may ask you to confirm it once. On older GNOME (such as
