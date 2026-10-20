@@ -31,3 +31,12 @@ dist-ssr
 
 # Release files downloaded from the Release workflow (attached to GitHub releases by hand).
 /release-files/
+
+# The maintainer's local AI-agent setup (Claude Code settings, hooks, skills,
+# MCP servers, agent notes) and the graft search tool: personal, not part of
+# the project.
+/.claude/
+/CLAUDE.md
+/.mcp.json
+/skills-lock.json
+/.ignore
