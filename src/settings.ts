@@ -22,6 +22,8 @@ interface SettingsView {
   logDir: string | null;
   /** Set when global hotkeys are limited (Wayland): command for a desktop shortcut. */
   showCommand: string | null;
+  /** Who holds the shortcut when it is not RightPeek (GNOME, the desktop portal). */
+  hotkeyNote: string | null;
 }
 
 const MODIFIER_CODES = new Set([
@@ -45,6 +47,7 @@ const showOnStartBox = document.querySelector<HTMLInputElement>("#show-on-start"
 const logDir = document.querySelector<HTMLElement>("#log-dir")!;
 const showCommand = document.querySelector<HTMLElement>("#show-command")!;
 const showCommandLine = document.querySelector<HTMLElement>("#show-command-line")!;
+const hotkeyNote = document.querySelector<HTMLElement>("#hotkey-note")!;
 const permission = document.querySelector<HTMLElement>("#permission")!;
 const permissionStatus = document.querySelector<HTMLElement>("#permission-status")!;
 const requestPermission = document.querySelector<HTMLButtonElement>("#request-permission")!;
@@ -156,10 +159,10 @@ async function load(): Promise<void> {
   showOnStartBox.checked = view.settings.showSettingsOnStart;
   if (view.logDir) logDir.textContent = `Folder: ${view.logDir}`;
   if (view.hotkeyError) showMessage(hotkeyMessage, view.hotkeyError, true);
-  if (view.showCommand) {
-    showCommandLine.textContent = view.showCommand;
-    showCommand.hidden = false;
-  }
+  showCommand.hidden = !view.showCommand;
+  showCommandLine.textContent = view.showCommand ?? "";
+  hotkeyNote.hidden = !view.hotkeyNote;
+  hotkeyNote.textContent = view.hotkeyNote ?? "";
 }
 
 async function start(): Promise<void> {

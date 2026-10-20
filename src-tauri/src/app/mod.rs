@@ -3,6 +3,8 @@
 
 mod autostart;
 pub mod hotkey;
+#[cfg(target_os = "linux")]
+mod hotkey_linux;
 pub mod logging;
 pub mod settings;
 pub mod tray;

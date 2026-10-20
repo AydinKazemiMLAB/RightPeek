@@ -68,6 +68,9 @@ arboard = { version = "3.6", default-features = false, features = ["wayland-data
 # The hotkey: a passive X11 key grab without polling (approved by the user,
 # 2026-10-20; already in the tree through arboard).
 x11rb = { version = "0.13", features = ["xkb"] }
+# The hotkey through the XDG GlobalShortcuts portal on Wayland (approved by
+# the user, 2026-10-20; already in the tree through the single-instance plugin).
+zbus = "5"
 
 # Selection capture (Accessibility, Cmd+C fallback) and the Services menu
 # provider; the objc2 family Tauri already uses (approved by the user, Phase 6).

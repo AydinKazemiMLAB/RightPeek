@@ -85,7 +85,7 @@ sudo dnf install ./RightPeek-<version>-1.x86_64.rpm
 
 بار اول که RightPeek اجرا می‌شود، پنجره‌ی Settings باز می‌شود تا بدانید برنامه در حال اجراست. آنجا می‌توانید کلید میانبر را عوض کنید، تم را انتخاب کنید، اجرای خودکار هنگام ورود به سیستم را روشن کنید و انتخاب کنید که برنامه بی‌صدا در System Tray شروع شود. Settings را از آیکون برنامه در System Tray یا از پنجره‌ی نمایش دوباره باز کنید.
 
-**Wayland (لینوکس):** میانبرهای سراسری فقط وقتی کار می‌کنند که یک برنامه‌ی X11 فعال باشد. در تنظیمات دسکتاپ یک میانبر کیبورد بسازید که دستور `rightpeek --show` را اجرا کند (GNOME: ‏Settings ← Keyboard ← Custom Shortcuts؛ KDE: ‏System Settings ← Shortcuts). پنجره‌ی Settings دستور دقیق را نشان می‌دهد.
+**Wayland (لینوکس):** در KDE Plasma و GNOME نسخه‌ی ۴۸ به بعد، خود دسکتاپ میانبر را مدیریت می‌کند و ممکن است یک بار تأییدش را از شما بخواهد. در GNOME قدیمی‌تر (مثل Ubuntu 24.04) خود RightPeek میانبر را در ‏Settings ← Keyboard ← Custom Shortcuts می‌سازد و هر بار که عوضش کنید به‌روزش می‌کند. در بقیه‌ی دسکتاپ‌های Wayland میانبر فقط وقتی کار می‌کند که یک برنامه‌ی X11 فعال باشد؛ در تنظیمات دسکتاپ یک میانبر کیبورد بسازید که دستور `rightpeek --show` را اجرا کند. پنجره‌ی Settings می‌گوید کدام حالت برقرار است و هر جا لازم باشد دستور دقیق را نشان می‌دهد.
 
 **مک:** علاوه بر میانبر، می‌توانید متن را انتخاب کنید، کلیک راست کنید و **Services ← Show in RightPeek** را بزنید. برنامه‌هایی که منوی کلیک راست خودشان را دارند (VS Code، تلگرام) Services را آنجا نشان نمی‌دهند؛ از منوی خود برنامه استفاده کنید (مثلاً Code ← Services) یا در System Settings ← Keyboard ← Keyboard Shortcuts ← Services برای آن میانبر بگذارید.
 
@@ -94,7 +94,7 @@ sudo dnf install ./RightPeek-<version>-1.x86_64.rpm
 ## حذف برنامه
 
 - **ویندوز:** ‏Settings ← Apps ← Installed apps ← RightPeek ← Uninstall. اجرای خودکار هنگام ورود هم حذف می‌شود. برای پاک شدن تنظیمات و لاگ‌ها، گزینه‌ی «Delete the application data» را تیک بزنید.
-- **لینوکس:** `sudo apt remove right-peek` یا `sudo dnf remove right-peek`. اجرای خودکار هنگام ورود هم حذف می‌شود. تنظیمات و لاگ‌ها در `~/.local/share/com.rightpeek.app` می‌مانند؛ برای حذفشان این پوشه را پاک کنید.
+- **لینوکس:** `sudo apt remove right-peek` یا `sudo dnf remove right-peek`. اجرای خودکار هنگام ورود هم حذف می‌شود. تنظیمات و لاگ‌ها در `~/.local/share/com.rightpeek.app` می‌مانند؛ برای حذفشان این پوشه را پاک کنید. در GNOME، میانبر RightPeek را هم از ‏Settings ← Keyboard ← Custom Shortcuts حذف کنید.
 - **مک:** در Settings گزینه‌ی «Start RightPeek when you sign in» را خاموش کنید، از نوار منو RightPeek را ببندید (Quit) و آن را از Applications به سطل زباله بیندازید. برای پاک کردن تنظیمات و لاگ‌ها، پوشه‌های `~/Library/Application Support/com.rightpeek.app` و `~/Library/Logs/com.rightpeek.app` را پاک کنید. اگر برنامه را قبلاً پاک کرده‌اید، فایل `~/Library/LaunchAgents/RightPeek.plist` را پاک کنید تا دیگر هنگام ورود اجرا نشود.
 
 ## حریم خصوصی

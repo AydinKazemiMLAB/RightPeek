@@ -172,6 +172,8 @@ These figures replace the WSLg ones above for memory.
 | Capture (`--show` → text read) | — | 38 ms | 44 ms | 107 ms | — |
 | CPU while idle (0.3.0) | ~0% | 1.3% | 1.5% | 1.2% | ❌ |
 | CPU while idle (X11 hotkey, PR #22) | ~0% | 0.02% | 0.02% | — | ✅ |
+| Idle RAM, no window (GNOME shortcut, PR #23) | ≤ 20 MB | 17.1 MB | — | — | ✅ |
+| CPU while idle (GNOME shortcut, PR #23) | ~0% | 0.03% | — | — | ✅ |
 
 Notes:
 - Viewer open: app ~40–41 MB, `WebKitWebProcess` ~63 MB,
@@ -192,3 +194,13 @@ Notes:
   an open viewer; Edit and Esc work; numbers after a Latin word stay with the
   Persian text; Ctrl+Shift+Space captures while an X11 (Xwayland) window has
   focus.
+- Wayland hotkey (PR #23): Ubuntu 24.04 has no GlobalShortcuts portal
+  (xdg-desktop-portal 1.18), so RightPeek falls back to a GNOME custom
+  shortcut in about 1 s at startup (portal probe plus `gsettings`). The
+  entry runs `"/usr/bin/rightpeek" --show`. The app keeps no X11
+  connection, so it does not keep Xwayland running. Over 60 s idle it used
+  2 ticks of CPU time. Checked by hand: in GNOME Text Editor (a native
+  Wayland app) Ctrl+Shift+R opens the viewer with the selection; Settings
+  shows the GNOME Custom Shortcuts note; changing the hotkey to Ctrl+Alt+R
+  updates the entry and the new key captures. The portal path needs KDE
+  Plasma 5.27+ or GNOME 48+ and was not tested here.
