@@ -104,6 +104,17 @@ pub fn replace(app: &AppHandle, new_hotkey: &str) -> Result<(), String> {
     }
 }
 
+/// A line for Settings when the desktop, not RightPeek, holds the shortcut.
+pub fn note() -> Option<String> {
+    backend::note()
+}
+
+/// Whether the shortcut works only while an X11 window has focus (Wayland
+/// without the portal or GNOME), so users need a desktop shortcut.
+pub fn needs_desktop_shortcut() -> bool {
+    backend::needs_desktop_shortcut()
+}
+
 fn label(hotkey: &str) -> String {
     hotkey_label(hotkey, cfg!(target_os = "macos"))
 }
@@ -125,33 +136,15 @@ mod backend {
             let _ = shortcuts.unregister(hotkey);
         }
     }
+
+    pub fn note() -> Option<String> {
+        None
+    }
+
+    pub fn needs_desktop_shortcut() -> bool {
+        false
+    }
 }
 
 #[cfg(target_os = "linux")]
-mod backend {
-    use std::sync::OnceLock;
-
-    use tauri::AppHandle;
-
-    use crate::core::hotkey::X11Hotkey;
-    use crate::platform::x11_hotkey::X11HotkeyListener;
-
-    /// Started on the first registration; one X connection for the app's life.
-    static LISTENER: OnceLock<Result<X11HotkeyListener, String>> = OnceLock::new();
-
-    pub fn register(app: &AppHandle, hotkey: &str) -> Result<(), String> {
-        let hotkey = X11Hotkey::parse(hotkey).map_err(|error| error.to_string())?;
-        let listener = LISTENER.get_or_init(|| {
-            let app = app.clone();
-            X11HotkeyListener::start(move || super::capture_and_show(&app))
-        });
-        listener.as_ref().map_err(Clone::clone)?.grab(hotkey)
-    }
-
-    /// Only one hotkey is ever grabbed, so the argument is not needed.
-    pub fn unregister(_app: &AppHandle, _hotkey: &str) {
-        if let Some(Ok(listener)) = LISTENER.get() {
-            listener.ungrab();
-        }
-    }
-}
+use super::hotkey_linux as backend;
