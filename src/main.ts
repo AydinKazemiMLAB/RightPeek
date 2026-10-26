@@ -12,6 +12,8 @@ interface Paragraph {
   dir: Direction;
   /** UTF-16 ranges of numbers that belong to the text after them (core::text). */
   numbers: [number, number][];
+  /** UTF-16 ranges of Arabic punctuation between two Latin words (core::text). */
+  separators: [number, number][];
 }
 
 type ViewerContent =
@@ -83,15 +85,21 @@ function render(content: ViewerContent): void {
 }
 
 // Detached numbers get a span that styles.css isolates in RTL paragraphs, so
-// "CPU، ۲ گیگابایت" keeps the number with the Persian text. No characters
-// are added: Copy and selections stay clean.
+// "CPU، ۲ گیگابایت" keeps the number with the Persian text. Arabic
+// punctuation between Latin words gets a span that styles.css follows with a
+// right-to-left mark, so "a.rs، b.rs" keeps its order. No characters are
+// added: Copy and selections stay clean.
 function fillParagraph(element: HTMLElement, paragraph: Paragraph): void {
+  const ranges = [
+    ...paragraph.numbers.map(([start, end]) => ({ start, end, className: "num" })),
+    ...paragraph.separators.map(([start, end]) => ({ start, end, className: "sep" })),
+  ].sort((a, b) => a.start - b.start);
   let at = 0;
-  for (const [start, end] of paragraph.numbers) {
-    const number = document.createElement("span");
-    number.className = "num";
-    number.textContent = paragraph.text.slice(start, end);
-    element.append(paragraph.text.slice(at, start), number);
+  for (const { start, end, className } of ranges) {
+    const span = document.createElement("span");
+    span.className = className;
+    span.textContent = paragraph.text.slice(start, end);
+    element.append(paragraph.text.slice(at, start), span);
     at = end;
   }
   element.append(paragraph.text.slice(at));

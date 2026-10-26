@@ -21,6 +21,8 @@ pub struct Paragraph {
     pub dir: Direction,
     /// [`detached_numbers`] of `text`; an RTL paragraph isolates them.
     pub numbers: Vec<(usize, usize)>,
+    /// [`latin_separators`] of `text`; an RTL paragraph adds a mark after them.
+    pub separators: Vec<(usize, usize)>,
 }
 
 /// Cleans captured text: CRLF/CR -> LF, Arabic presentation forms -> base
@@ -63,6 +65,7 @@ pub fn paragraphs(text: &str) -> Vec<Paragraph> {
                     text: String::new(),
                     dir: Direction::Auto,
                     numbers: Vec::new(),
+                    separators: Vec::new(),
                 });
             }
         } else {
@@ -70,6 +73,7 @@ pub fn paragraphs(text: &str) -> Vec<Paragraph> {
                 text: line.to_owned(),
                 dir: detect_direction(line),
                 numbers: detached_numbers(line),
+                separators: latin_separators(line),
             });
         }
     }
@@ -155,6 +159,32 @@ pub fn detached_numbers(text: &str) -> Vec<(usize, usize)> {
             punctuation_since_strong = true;
         }
         i += 1;
+    }
+    result
+}
+
+/// Arabic punctuation (comma, semicolon, question mark) between two Latin
+/// words. It has no direction of its own, so the bidi algorithm gives it the
+/// direction of the Latin text around it (UAX #9, rule N1) and the items join
+/// one left-to-right run: "a.rs، b.rs" reads "b.rs" first in an RTL
+/// paragraph. The mark is Persian punctuation, so the items belong to the
+/// RTL text; the viewer adds a right-to-left mark after each one. Ranges are
+/// UTF-16 offsets, as in [`detached_numbers`].
+pub fn latin_separators(text: &str) -> Vec<(usize, usize)> {
+    let mut result = Vec::new();
+    let mut previous_strong = None;
+    let mut offset = 0;
+    for (i, c) in text.char_indices() {
+        if matches!(c, '،' | '؛' | '؟')
+            && previous_strong == Some(Direction::Ltr)
+            && text[i + c.len_utf8()..].chars().find_map(strong_direction) == Some(Direction::Ltr)
+        {
+            result.push((offset, offset + c.len_utf16()));
+        }
+        if let Some(direction) = strong_direction(c) {
+            previous_strong = Some(direction);
+        }
+        offset += c.len_utf16();
     }
     result
 }
@@ -442,5 +472,62 @@ mod tests {
         assert_eq!(paragraphs[0].numbers, detached_numbers("RAM، ۲۰ گیگابایت"));
         assert!(!paragraphs[0].numbers.is_empty());
         assert!(paragraphs[1].numbers.is_empty());
+    }
+
+    // --- latin_separators ------------------------------------------------
+
+    /// The characters `latin_separators` marks, as strings.
+    fn separators(text: &str) -> Vec<String> {
+        let units: Vec<u16> = text.encode_utf16().collect();
+        latin_separators(text)
+            .into_iter()
+            .map(|(start, end)| String::from_utf16(&units[start..end]).unwrap())
+            .collect()
+    }
+
+    #[test]
+    fn arabic_commas_between_latin_items_are_marked() {
+        let text = "فایل‌ها: a.rs، b.rs، c.rs و migration 0008";
+        assert_eq!(separators(text), ["،", "،"]);
+        let first = text[..text.find('،').unwrap()].encode_utf16().count();
+        assert_eq!(latin_separators(text)[0], (first, first + 1));
+    }
+
+    #[test]
+    fn a_latin_word_before_a_zwnj_suffix_counts_as_latin() {
+        assert_eq!(separators("دامنه‌ی preferences، command‌ها، state.rs"), ["،"]);
+    }
+
+    #[test]
+    fn arabic_semicolon_and_question_mark_are_marked() {
+        assert_eq!(separators("Rust؛ Go"), ["؛"]);
+        assert_eq!(separators("آیا Rust؟ Go هم"), ["؟"]);
+    }
+
+    #[test]
+    fn separators_next_to_rtl_text_are_left_alone() {
+        assert!(separators("Rust، فایل‌های جدید: storage، دامنه‌ی").is_empty());
+        assert!(separators("Rust،").is_empty());
+    }
+
+    #[test]
+    fn latin_punctuation_is_left_alone() {
+        assert!(separators("فایل‌ها: a.rs, b.rs; c.rs").is_empty());
+    }
+
+    #[test]
+    fn an_existing_right_to_left_mark_already_separates() {
+        assert!(separators("a.rs،\u{200F} b.rs").is_empty());
+    }
+
+    #[test]
+    fn paragraphs_carry_their_latin_separators() {
+        let paragraphs = paragraphs("فایل‌ها: a.rs، b.rs\nRust، Go");
+        assert_eq!(
+            paragraphs[0].separators,
+            latin_separators("فایل‌ها: a.rs، b.rs")
+        );
+        assert!(!paragraphs[0].separators.is_empty());
+        assert!(!paragraphs[1].separators.is_empty());
     }
 }
