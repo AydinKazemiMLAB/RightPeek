@@ -184,6 +184,13 @@ body {
   unicode-bidi: isolate;
 }
 
+/* Arabic punctuation between Latin words (core::text::latin_separators): a
+   generated right-to-left mark keeps the Latin items in RTL order and is
+   never copied. RTL paragraphs only, like .num. */
+.viewer p[dir="rtl"] .sep::after {
+  content: "\200F";
+}
+
 .viewer.justify > p {
   text-align: justify;
 }

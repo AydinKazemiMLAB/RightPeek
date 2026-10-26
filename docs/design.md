@@ -149,6 +149,13 @@ Per-app results: [`capture-matrix.md`](capture-matrix.md).
   span that is an RTL isolate inside RTL paragraphs only. "Windows 11"
   (space only) and "CPU, 2 GB" (Latin after) are left alone. No characters
   are inserted, so Copy and selections stay clean.
+- Arabic punctuation between Latin words: the Arabic comma, semicolon and
+  question mark have no direction, so between two Latin words they take the
+  Latin direction (UAX #9, rule N1) and the items join one left-to-right
+  run: "a.rs، b.rs" reads "b.rs" first in an RTL paragraph.
+  `core::text::latin_separators` marks these; in RTL paragraphs the viewer
+  follows each with a right-to-left mark from CSS generated content
+  (`::after`), which is not part of the text, so Copy stays clean too.
 - Bundled **Vazirmatn** font (Latin and Arabic subsets); no network fonts.
 - Normalization: CRLF → LF; zero-width characters removed except the ZWNJ
   (U+200C, needed in Persian); trailing spaces trimmed; Arabic presentation
